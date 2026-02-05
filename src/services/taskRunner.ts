@@ -5,7 +5,7 @@ import {
   updateTaskError
 } from "./database.js";
 import { generateBlogDraft, applyFeedbackToDraft } from "./gemini.js";
-import { TaskStatus, TaskType, TaskResult, InputType, BlogStyle, Language, ReviewFocus } from "../types.js";
+import { TaskStatus, TaskType, TaskResult, InputType, BlogStyle, Language, ReviewFocus, GeminiModel } from "../types.js";
 
 // 알림 콜백 (외부에서 설정 가능)
 type NotificationCallback = (taskId: string, status: TaskStatus, message: string) => void;
@@ -40,6 +40,8 @@ export async function runDraftGeneration(
   content: string,
   style: BlogStyle,
   language: Language,
+  model: GeminiModel,
+  instructions: string | undefined,
   customPrompt: string | undefined,
   apiKey: string
 ): Promise<void> {
@@ -48,7 +50,7 @@ export async function runDraftGeneration(
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
 
     // 진행 상황 알림
-    sendNotification(taskId, TaskStatus.IN_PROGRESS, "블로그 초안 생성을 시작합니다...");
+    sendNotification(taskId, TaskStatus.IN_PROGRESS, `블로그 초안 생성을 시작합니다... (모델: ${model})`);
 
     // 진행률 업데이트
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 30);
@@ -59,6 +61,8 @@ export async function runDraftGeneration(
       content,
       style,
       language,
+      model,
+      instructions,
       customPrompt,
       apiKey
     );
@@ -90,6 +94,7 @@ export async function runDraftGeneration(
 export async function runFeedbackApplication(
   taskId: string,
   feedback: string,
+  model: GeminiModel,
   apiKey: string
 ): Promise<void> {
   try {
@@ -99,13 +104,14 @@ export async function runFeedbackApplication(
     }
 
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
-    sendNotification(taskId, TaskStatus.IN_PROGRESS, "피드백을 반영 중입니다...");
+    sendNotification(taskId, TaskStatus.IN_PROGRESS, `피드백을 반영 중입니다... (모델: ${model})`);
 
     // 피드백 반영
     const result = await applyFeedbackToDraft(
       task.result.draft,
       feedback,
       task.type === TaskType.REVIEW ? "review" : "draft",
+      model,
       apiKey
     );
 
@@ -137,15 +143,17 @@ export async function runReviewGeneration(
   taskId: string,
   draft: string,
   focus: ReviewFocus,
+  model: GeminiModel,
+  instructions: string | undefined,
   customPrompt: string | undefined,
   apiKey: string
 ): Promise<void> {
   try {
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
-    sendNotification(taskId, TaskStatus.IN_PROGRESS, "블로그 글 검수를 시작합니다...");
+    sendNotification(taskId, TaskStatus.IN_PROGRESS, `블로그 글 검수를 시작합니다... (모델: ${model})`);
 
     // Gemini로 검수 수행
-    const result = await generateReview(draft, focus, customPrompt, apiKey);
+    const result = await generateReview(draft, focus, model, instructions, customPrompt, apiKey);
 
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
 
@@ -174,9 +182,11 @@ export async function runReviewGeneration(
 async function generateReview(
   draft: string,
   focus: ReviewFocus,
+  model: GeminiModel,
+  instructions: string | undefined,
   customPrompt: string | undefined,
   apiKey: string
 ): Promise<{ improved: string; changes: string[] }> {
   const { reviewBlogDraft } = await import("./gemini.js");
-  return reviewBlogDraft(draft, focus, customPrompt, apiKey);
+  return reviewBlogDraft(draft, focus, model, instructions, customPrompt, apiKey);
 }

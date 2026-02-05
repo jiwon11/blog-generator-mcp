@@ -19,16 +19,16 @@ function sendNotification(taskId, status, message) {
         }
     }
 }
-export async function runDraftGeneration(taskId, inputType, content, style, language, customPrompt, apiKey) {
+export async function runDraftGeneration(taskId, inputType, content, style, language, model, instructions, customPrompt, apiKey) {
     try {
         // 상태 업데이트: 진행 중
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
         // 진행 상황 알림
-        sendNotification(taskId, TaskStatus.IN_PROGRESS, "블로그 초안 생성을 시작합니다...");
+        sendNotification(taskId, TaskStatus.IN_PROGRESS, `블로그 초안 생성을 시작합니다... (모델: ${model})`);
         // 진행률 업데이트
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 30);
         // Gemini로 초안 생성
-        const result = await generateBlogDraft(inputType, content, style, language, customPrompt, apiKey);
+        const result = await generateBlogDraft(inputType, content, style, language, model, instructions, customPrompt, apiKey);
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
         // 결과 저장
         const taskResult = {
@@ -45,16 +45,16 @@ export async function runDraftGeneration(taskId, inputType, content, style, lang
         sendNotification(taskId, TaskStatus.FAILED, `초안 생성 실패: ${errorMessage}`);
     }
 }
-export async function runFeedbackApplication(taskId, feedback, apiKey) {
+export async function runFeedbackApplication(taskId, feedback, model, apiKey) {
     try {
         const task = await getTask(taskId);
         if (!task || !task.result?.draft) {
             throw new Error("기존 초안을 찾을 수 없습니다");
         }
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
-        sendNotification(taskId, TaskStatus.IN_PROGRESS, "피드백을 반영 중입니다...");
+        sendNotification(taskId, TaskStatus.IN_PROGRESS, `피드백을 반영 중입니다... (모델: ${model})`);
         // 피드백 반영
-        const result = await applyFeedbackToDraft(task.result.draft, feedback, task.type === TaskType.REVIEW ? "review" : "draft", apiKey);
+        const result = await applyFeedbackToDraft(task.result.draft, feedback, task.type === TaskType.REVIEW ? "review" : "draft", model, apiKey);
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
         // 결과 업데이트
         const taskResult = {
@@ -71,12 +71,12 @@ export async function runFeedbackApplication(taskId, feedback, apiKey) {
         sendNotification(taskId, TaskStatus.FAILED, `피드백 반영 실패: ${errorMessage}`);
     }
 }
-export async function runReviewGeneration(taskId, draft, focus, customPrompt, apiKey) {
+export async function runReviewGeneration(taskId, draft, focus, model, instructions, customPrompt, apiKey) {
     try {
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
-        sendNotification(taskId, TaskStatus.IN_PROGRESS, "블로그 글 검수를 시작합니다...");
+        sendNotification(taskId, TaskStatus.IN_PROGRESS, `블로그 글 검수를 시작합니다... (모델: ${model})`);
         // Gemini로 검수 수행
-        const result = await generateReview(draft, focus, customPrompt, apiKey);
+        const result = await generateReview(draft, focus, model, instructions, customPrompt, apiKey);
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
         const taskResult = {
             draft: result.improved,
@@ -93,8 +93,8 @@ export async function runReviewGeneration(taskId, draft, focus, customPrompt, ap
     }
 }
 // 검수 함수
-async function generateReview(draft, focus, customPrompt, apiKey) {
+async function generateReview(draft, focus, model, instructions, customPrompt, apiKey) {
     const { reviewBlogDraft } = await import("./gemini.js");
-    return reviewBlogDraft(draft, focus, customPrompt, apiKey);
+    return reviewBlogDraft(draft, focus, model, instructions, customPrompt, apiKey);
 }
 //# sourceMappingURL=taskRunner.js.map

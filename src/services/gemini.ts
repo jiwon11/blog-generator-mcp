@@ -1,7 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus } from "../types.js";
-
-const GEMINI_MODEL = "gemini-1.5-flash";
+import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus, GeminiModel } from "../types.js";
 
 interface GenerateResult {
   draft: string;
@@ -24,6 +22,7 @@ function getPromptTemplate(
   style: BlogStyle,
   language: Language,
   content: string,
+  instructions?: string,
   customPrompt?: string
 ): string {
   const languageInstruction = language === Language.KO
@@ -77,13 +76,23 @@ ${content}`
 ${inputInstructions[inputType]}
 
 글 스타일: ${style}
-스타일 가이드라인:
+기본 스타일 가이드라인:
 ${styleInstructions[style]}`;
 
+  // 상세 지침이 있으면 추가 (최우선 적용)
+  if (instructions) {
+    prompt += `
+
+====== 상세 작성 지침 (반드시 따라야 함) ======
+${instructions}
+====== 지침 끝 ======`;
+  }
+
+  // 간단한 추가 요청
   if (customPrompt) {
     prompt += `
 
-사용자 추가 요청:
+추가 요청사항:
 ${customPrompt}`;
   }
 
@@ -161,6 +170,8 @@ export async function generateBlogDraft(
   content: string,
   style: BlogStyle,
   language: Language,
+  model: GeminiModel,
+  instructions: string | undefined,
   customPrompt: string | undefined,
   apiKey: string
 ): Promise<GenerateResult> {
@@ -172,12 +183,12 @@ export async function generateBlogDraft(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+  const genModel = genAI.getGenerativeModel({ model });
 
-  const prompt = getPromptTemplate(inputType, style, language, content, customPrompt);
+  const prompt = getPromptTemplate(inputType, style, language, content, instructions, customPrompt);
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await genModel.generateContent(prompt);
     const response = result.response.text();
 
     return parseResponse(response);
@@ -189,6 +200,9 @@ export async function generateBlogDraft(
       if (error.message.includes("quota")) {
         throw new Error("Gemini API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요.");
       }
+      if (error.message.includes("not found") || error.message.includes("404")) {
+        throw new Error(`모델을 찾을 수 없습니다: ${model}. 다른 모델을 선택해주세요.`);
+      }
       throw new Error(`Gemini API 오류: ${error.message}`);
     }
     throw new Error("알 수 없는 오류가 발생했습니다.");
@@ -199,6 +213,7 @@ export async function applyFeedbackToDraft(
   originalDraft: string,
   feedback: string,
   type: "draft" | "review",
+  model: GeminiModel,
   apiKey: string
 ): Promise<FeedbackResult> {
   if (!apiKey) {
@@ -206,7 +221,7 @@ export async function applyFeedbackToDraft(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+  const genModel = genAI.getGenerativeModel({ model });
 
   const prompt = `당신은 기술 블로그 편집자입니다.
 
@@ -240,7 +255,7 @@ ${feedback}
 \`\`\``;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await genModel.generateContent(prompt);
     const response = result.response.text();
 
     return parseFeedbackResponse(response);
@@ -255,6 +270,8 @@ ${feedback}
 export async function reviewBlogDraft(
   draft: string,
   focus: ReviewFocus,
+  model: GeminiModel,
+  instructions: string | undefined,
   customPrompt: string | undefined,
   apiKey: string
 ): Promise<ReviewResult> {
@@ -263,7 +280,7 @@ export async function reviewBlogDraft(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+  const genModel = genAI.getGenerativeModel({ model });
 
   const focusInstructions: Record<ReviewFocus, string> = {
     [ReviewFocus.ACCURACY]: `
@@ -294,8 +311,19 @@ SEO 최적화에 집중하여 검토해주세요:
 
   let prompt = `당신은 기술 블로그 편집자입니다. 아래 블로그 글을 검토하고 개선해주세요.
 
+기본 검수 기준:
 ${focusInstructions[focus]}`;
 
+  // 상세 검수 지침
+  if (instructions) {
+    prompt += `
+
+====== 상세 검수 지침 (반드시 따라야 함) ======
+${instructions}
+====== 지침 끝 ======`;
+  }
+
+  // 간단한 추가 요청
   if (customPrompt) {
     prompt += `
 
@@ -318,7 +346,7 @@ ${draft}
 ---END---`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await genModel.generateContent(prompt);
     const response = result.response.text();
 
     // Parse response

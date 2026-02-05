@@ -1,133 +1,24 @@
-# Blog Generator MCP Server v2
+# Blog Generator MCP
 
-Gemini AI를 사용하여 블로그 초안을 생성하고, Claude가 검수하여 품질 높은 기술 블로그 글을 자동 생성하는 MCP 서버입니다.
+AI를 활용한 기술 블로그 자동 생성 MCP 서버입니다.
 
-## v2 주요 기능
+---
 
-- **다중 플랫폼 지원**: stdio (로컬) + HTTP (원격 서버)
-- **다중 사용자 지원**: API 키를 파라미터로 전달
-- **인터랙티브 워크플로우**: 단계별 도구로 피드백 반영 가능
-- **백그라운드 실행**: 긴 작업은 백그라운드에서 실행, 완료 시 알림
+## 빠른 시작
 
-## 설치 및 실행
+### 1. 설치
 
 ```bash
-# npm에서 직접 실행
 npx blog-generator-mcp
-
-# stdio 모드 (기본값, Claude Desktop용)
-npx blog-generator-mcp --stdio
-
-# HTTP 서버 모드 (원격 서버용)
-npx blog-generator-mcp --http --port 3000
-
-# 데이터베이스 경로 지정
-npx blog-generator-mcp --db ./my-data/tasks.db
 ```
 
-## MCP 도구 목록
+### 2. API 키 준비
 
-### 초안 생성 워크플로우
-| 도구명 | 설명 |
-|--------|------|
-| `blog_start_draft` | 블로그 초안 생성 시작 (백그라운드) |
-| `blog_get_status` | 작업 상태 조회 |
-| `blog_apply_feedback` | 사용자 피드백 반영 |
-| `blog_finalize_draft` | 최종 초안 확정 |
+- **Gemini API 키**: [Google AI Studio](https://aistudio.google.com/app/apikey)에서 발급
 
-### 검수 워크플로우
-| 도구명 | 설명 |
-|--------|------|
-| `blog_start_review` | 블로그 검수 시작 (백그라운드) |
-| `blog_apply_review_feedback` | 검수 피드백 반영 |
+### 3. Claude Desktop 설정
 
-### 저장 및 배포
-| 도구명 | 설명 |
-|--------|------|
-| `blog_save` | 로컬 마크다운 파일로 저장 |
-| `blog_deploy_github` | GitHub 저장소에 배포 |
-
-## 사용 예시
-
-### 1. 블로그 초안 생성
-
-```
-User: "React hooks에 대한 튜토리얼 블로그 글을 작성해줘"
-
-1. blog_start_draft 호출
-   → input_type: "keyword"
-   → content: "React hooks"
-   → style: "tutorial"
-   → gemini_api_key: "your_key"
-   → 반환: { task_id: "abc123", status: "pending" }
-
-2. blog_get_status 호출 (작업 완료 확인)
-   → task_id: "abc123"
-   → 반환: { status: "completed", result: { draft: "...", metadata: {...} } }
-```
-
-### 2. 피드백 반영
-
-```
-User: "코드 예제를 더 추가해줘"
-
-3. blog_apply_feedback 호출
-   → task_id: "abc123"
-   → feedback: "코드 예제를 더 추가해주세요"
-   → gemini_api_key: "your_key"
-
-4. blog_get_status로 결과 확인
-```
-
-### 3. 검수 및 저장
-
-```
-5. blog_start_review 호출
-   → task_id: "abc123"
-   → focus: "all"
-   → gemini_api_key: "your_key"
-
-6. blog_save 호출
-   → task_id: "review_task_id"
-   → directory: "./posts"
-
-7. blog_deploy_github 호출 (선택)
-   → task_id: "review_task_id"
-   → repo: "user/blog"
-   → target_path: "_posts/2024-01-15-react-hooks.md"
-   → github_token: "your_token"
-```
-
-## 입력 유형
-
-| 유형 | 설명 | 예시 |
-|------|------|------|
-| `keyword` | 키워드/주제 | "React hooks 사용법" |
-| `code` | 코드 스니펫 | 코드를 설명하는 글 생성 |
-| `memo` | 메모/노트 | 불릿포인트를 완성된 글로 |
-| `git_push` | Git 변경사항 | 커밋 내역으로 개발일지 생성 |
-
-## 글 스타일
-
-| 스타일 | 설명 |
-|--------|------|
-| `tutorial` | 단계별 튜토리얼 (기본값) |
-| `til` | Today I Learned 형식 |
-| `deep-dive` | 심층 기술 분석 |
-| `troubleshooting` | 문제 해결 과정 |
-
-## 검수 초점
-
-| 초점 | 설명 |
-|------|------|
-| `accuracy` | 기술적 정확성 |
-| `readability` | 가독성 |
-| `seo` | SEO 최적화 |
-| `all` | 전체 검수 (기본값) |
-
-## Claude Desktop 설정
-
-`~/.config/claude/claude_desktop_config.json` (macOS/Linux):
+`~/.config/claude/claude_desktop_config.json`:
 
 ```json
 {
@@ -140,10 +31,318 @@ User: "코드 예제를 더 추가해줘"
 }
 ```
 
-## HTTP 서버로 배포
+Claude Desktop을 재시작하면 사용 준비 완료!
+
+---
+
+## 사용법
+
+### 기본 워크플로우
+
+```
+1. blog_start_draft    → 초안 생성 시작
+2. blog_get_status     → 완료 확인
+3. blog_apply_feedback → (선택) 피드백 반영
+4. blog_start_review   → 검수 시작
+5. blog_save           → 파일 저장
+```
+
+---
+
+## 도구 상세 가이드
+
+### blog_start_draft - 초안 생성
+
+**필수 파라미터:**
+```json
+{
+  "input_type": "keyword",
+  "content": "React useEffect 훅 사용법",
+  "gemini_api_key": "YOUR_API_KEY"
+}
+```
+
+**선택 파라미터:**
+| 파라미터 | 설명 | 기본값 |
+|---------|------|-------|
+| `style` | 글 스타일 | `tutorial` |
+| `language` | 언어 | `ko` |
+| `model` | Gemini 모델 | `gemini-1.5-flash` |
+| `instructions` | 상세 작성 지침 | - |
+| `custom_prompt` | 간단한 추가 요청 | - |
+
+**입력 유형 (input_type):**
+| 값 | 용도 | 예시 |
+|----|------|------|
+| `keyword` | 키워드로 글 생성 | "React hooks" |
+| `code` | 코드 설명 글 | 코드 스니펫 |
+| `memo` | 메모를 글로 확장 | 불릿포인트 메모 |
+| `git_push` | 개발일지 생성 | git diff 내용 |
+
+**글 스타일 (style):**
+| 값 | 설명 |
+|----|------|
+| `tutorial` | 단계별 튜토리얼 |
+| `til` | Today I Learned |
+| `deep-dive` | 심층 분석 |
+| `troubleshooting` | 문제 해결 과정 |
+
+**사용 예시:**
+```
+"React hooks에 대한 튜토리얼을 작성해줘"
+
+→ blog_start_draft 호출:
+  - input_type: "keyword"
+  - content: "React hooks"
+  - style: "tutorial"
+  - gemini_api_key: "YOUR_KEY"
+```
+
+---
+
+### blog_get_status - 상태 확인
+
+**파라미터:**
+```json
+{
+  "task_id": "작업 ID"
+}
+```
+
+**응답 예시:**
+```json
+{
+  "task_id": "abc-123",
+  "status": "completed",
+  "progress": 100,
+  "result": {
+    "draft": "# React Hooks 완벽 가이드\n...",
+    "metadata": {
+      "title": "React Hooks 완벽 가이드",
+      "tags": ["React", "Hooks", "JavaScript"],
+      "estimatedReadTime": "10분"
+    }
+  }
+}
+```
+
+**상태 값:**
+| 상태 | 설명 |
+|------|------|
+| `pending` | 대기 중 |
+| `in_progress` | 진행 중 |
+| `completed` | 완료 |
+| `failed` | 실패 |
+
+---
+
+### blog_apply_feedback - 피드백 반영
+
+**파라미터:**
+```json
+{
+  "task_id": "작업 ID",
+  "feedback": "코드 예제를 더 추가해주세요",
+  "gemini_api_key": "YOUR_KEY"
+}
+```
+
+**사용 예시:**
+```
+"코드 예제를 더 추가하고, 초보자도 이해할 수 있게 설명을 보충해줘"
+
+→ blog_apply_feedback 호출:
+  - task_id: "이전 작업 ID"
+  - feedback: "코드 예제를 더 추가하고, 초보자도 이해할 수 있게 설명을 보충해주세요"
+```
+
+---
+
+### blog_start_review - 검수
+
+**파라미터:**
+```json
+{
+  "task_id": "초안 작업 ID",
+  "focus": "all",
+  "gemini_api_key": "YOUR_KEY"
+}
+```
+
+**검수 초점 (focus):**
+| 값 | 설명 |
+|----|------|
+| `accuracy` | 기술적 정확성 |
+| `readability` | 가독성 |
+| `seo` | SEO 최적화 |
+| `all` | 전체 검수 (기본값) |
+
+---
+
+### blog_save - 파일 저장
+
+**파라미터:**
+```json
+{
+  "task_id": "작업 ID",
+  "directory": "./posts"
+}
+```
+
+**결과:**
+```json
+{
+  "filepath": "./posts/2024-01-15-react-hooks-완벽-가이드.md"
+}
+```
+
+---
+
+### blog_deploy_github - GitHub 배포
+
+**파라미터:**
+```json
+{
+  "task_id": "작업 ID",
+  "repo": "username/blog",
+  "target_path": "_posts/2024-01-15-react-hooks.md",
+  "github_token": "YOUR_GITHUB_TOKEN"
+}
+```
+
+---
+
+## 상세 지침 (instructions) 활용하기
+
+`instructions` 파라미터를 사용하면 AI가 따라야 할 상세한 작성 규칙을 지정할 수 있습니다.
+
+### 예시: 회사 블로그 스타일 가이드
+
+```
+blog_start_draft 호출:
+- input_type: "keyword"
+- content: "Kubernetes 배포 전략"
+- instructions: |
+    ## 작성 스타일
+    - 경어체 사용 (~합니다, ~입니다)
+    - 문장은 짧고 명확하게
+    - 한 단락은 3-4문장 이내
+
+    ## 필수 포함 섹션
+    1. 개요 (왜 이 주제가 중요한지)
+    2. 핵심 개념 설명
+    3. 실습 예제 (복사해서 바로 실행 가능)
+    4. 주의사항 및 팁
+    5. 마무리 및 다음 단계
+
+    ## 코드 스타일
+    - 모든 코드 블록에 언어 명시
+    - 주석은 한국어로
+    - 실제 동작하는 완전한 예제 제공
+
+    ## 타겟 독자
+    - 백엔드 개발 경력 1-3년차
+    - Docker 기본 지식 보유
+    - Kubernetes 입문자
+
+    ## 금지 사항
+    - "쉽습니다", "간단합니다" 등의 표현 금지
+    - 불필요한 영어 표현 자제
+```
+
+### 예시: TIL 스타일
+
+```
+instructions: |
+    ## 형식
+    - 날짜와 제목으로 시작
+    - 배운 내용을 불릿포인트로 정리
+    - 실제 코드나 명령어 포함
+
+    ## 톤
+    - 개인적이고 솔직한 톤
+    - 시행착오 과정도 포함
+    - 다음에 더 알아볼 것 메모
+```
+
+---
+
+## 모델 선택 가이드
+
+| 모델 | 용도 | 특징 |
+|------|------|------|
+| `gemini-1.5-flash` | 일반 용도 (기본값) | 빠른 응답, 비용 효율적 |
+| `gemini-1.5-flash-8b` | 간단한 작업 | 가장 빠름 |
+| `gemini-1.5-pro` | 고품질 필요 시 | 복잡한 주제, 긴 글 |
+| `gemini-2.0-flash` | 최신 기능 | 최신 모델 |
+
+**추천:**
+- 일반 블로그 글: `gemini-1.5-flash`
+- 기술 심층 분석: `gemini-1.5-pro`
+- 짧은 TIL: `gemini-1.5-flash-8b`
+
+---
+
+## 실전 예시
+
+### 예시 1: 튜토리얼 작성
+
+```
+User: "Next.js App Router에 대한 튜토리얼을 작성해줘"
+
+1. blog_start_draft
+   - input_type: "keyword"
+   - content: "Next.js App Router"
+   - style: "tutorial"
+   - model: "gemini-1.5-pro"
+   - gemini_api_key: "..."
+
+2. blog_get_status (완료 확인)
+
+3. blog_apply_feedback
+   - feedback: "서버 컴포넌트와 클라이언트 컴포넌트 차이를 더 자세히 설명해줘"
+
+4. blog_start_review
+   - focus: "accuracy"
+
+5. blog_save
+   - directory: "./content/posts"
+```
+
+### 예시 2: 개발일지 자동 생성
+
+```
+User: "오늘 커밋 내용으로 개발일지 써줘"
+
+1. blog_start_draft
+   - input_type: "git_push"
+   - content: "<git diff 또는 commit log>
+   - style: "til"
+   - gemini_api_key: "..."
+
+2. blog_get_status → blog_save
+```
+
+### 예시 3: 코드 설명 블로그
+
+```
+User: "이 코드를 설명하는 블로그 글을 작성해줘"
+
+1. blog_start_draft
+   - input_type: "code"
+   - content: "<코드 내용>"
+   - style: "deep-dive"
+   - instructions: "코드의 동작 원리를 시각적으로 설명하고, 성능 관점에서 분석해줘"
+```
+
+---
+
+## HTTP 서버 모드
+
+여러 사용자가 공유하는 서버로 배포할 수 있습니다.
 
 ```bash
-# 서버 실행
+# HTTP 서버 시작
 npx blog-generator-mcp --http --port 3000
 
 # 헬스 체크
@@ -155,26 +354,23 @@ curl -X POST http://localhost:3000/mcp \
   -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
 ```
 
-## API 키 발급
+---
 
-- **Gemini API 키**: [Google AI Studio](https://aistudio.google.com/app/apikey)
-- **GitHub Token**: [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens) (repo 권한 필요)
+## 문제 해결
 
-## 개발
+### "Gemini API 키가 필요합니다"
+→ `gemini_api_key` 파라미터에 API 키를 전달했는지 확인
 
-```bash
-# 의존성 설치
-npm install
+### "작업을 찾을 수 없습니다"
+→ `task_id`가 올바른지 확인. 서버 재시작 시 이전 작업은 유지됨
 
-# 개발 모드
-npm run dev
+### "모델을 찾을 수 없습니다"
+→ 지원되는 모델명 확인: `gemini-1.5-flash`, `gemini-1.5-pro` 등
 
-# 빌드
-npm run build
+### 응답이 느림
+→ `gemini-1.5-flash` 대신 `gemini-1.5-flash-8b` 사용
 
-# 실행
-npm start
-```
+---
 
 ## 라이선스
 

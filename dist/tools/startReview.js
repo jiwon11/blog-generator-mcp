@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { StartReviewInputSchema, TaskType, TaskStatus } from "../types.js";
+import { StartReviewInputSchema, TaskType, TaskStatus, GeminiModel } from "../types.js";
 import { createTask, getTask } from "../services/database.js";
 import { runReviewGeneration } from "../services/taskRunner.js";
 export function registerStartReviewTool(server) {
@@ -9,25 +9,38 @@ export function registerStartReviewTool(server) {
 
 기존 작업 ID를 사용하거나 직접 초안을 입력할 수 있습니다.
 
-검수 초점 옵션:
+## 검수 초점 (focus)
 - accuracy: 기술적 정확성
 - readability: 가독성
 - seo: SEO 최적화
 - all: 전체 검수 (기본값)
 
+## 모델 선택 (model)
+- gemini-1.5-flash: 빠른 검수 (기본값)
+- gemini-1.5-pro: 심층 검수
+
+## 상세 검수 지침 (instructions)
+검수 기준을 상세히 지정할 수 있습니다:
+- 회사/팀 스타일 가이드
+- 용어 사용 규칙
+- 코드 컨벤션
+- 타겟 독자 수준
+- 금지 표현
+등을 명시하면 해당 기준으로 검수합니다.
+
 Args:
   - task_id: 기존 작업 ID (선택)
   - draft: 직접 입력할 초안 내용 (선택)
   - focus: 검수 초점 (기본: all)
-  - custom_prompt: 추가 검수 요청 사항
+  - model: Gemini 모델 (기본: gemini-1.5-flash)
+  - instructions: 상세 검수 지침 (선택)
+  - custom_prompt: 간단한 추가 검수 요청 (선택)
   - gemini_api_key: Gemini API 키 (필수)
 
 Returns:
   - task_id: 검수 작업 ID
   - status: "pending"
-  - message: 안내 메시지
-
-완료 시 알림이 전송됩니다.`,
+  - message: 안내 메시지`,
         inputSchema: StartReviewInputSchema,
         annotations: {
             readOnlyHint: false,
@@ -38,6 +51,7 @@ Returns:
     }, async (params) => {
         try {
             let draft;
+            const model = params.model || GeminiModel.FLASH;
             // 기존 작업에서 draft 가져오기 또는 직접 입력 사용
             if (params.task_id) {
                 const existingTask = await getTask(params.task_id);
@@ -79,14 +93,17 @@ Returns:
                 source_task_id: params.task_id,
                 draft,
                 focus: params.focus,
+                model,
+                instructions: params.instructions,
                 custom_prompt: params.custom_prompt
             });
             // 백그라운드에서 실행
-            runReviewGeneration(taskId, draft, params.focus, params.custom_prompt, params.gemini_api_key).catch(console.error);
+            runReviewGeneration(taskId, draft, params.focus, model, params.instructions, params.custom_prompt, params.gemini_api_key).catch(console.error);
             const output = {
                 task_id: taskId,
                 status: TaskStatus.PENDING,
-                message: "블로그 검수가 시작되었습니다. blog_get_status로 진행 상황을 확인하세요."
+                model,
+                message: `블로그 검수가 시작되었습니다. (모델: ${model}) blog_get_status로 진행 상황을 확인하세요.`
             };
             return {
                 content: [{

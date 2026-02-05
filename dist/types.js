@@ -38,18 +38,15 @@ export var TaskType;
     TaskType["DRAFT"] = "draft";
     TaskType["REVIEW"] = "review";
 })(TaskType || (TaskType = {}));
+// Gemini 모델 선택
+export var GeminiModel;
+(function (GeminiModel) {
+    GeminiModel["FLASH"] = "gemini-1.5-flash";
+    GeminiModel["FLASH_8B"] = "gemini-1.5-flash-8b";
+    GeminiModel["PRO"] = "gemini-1.5-pro";
+    GeminiModel["PRO_2"] = "gemini-2.0-flash";
+})(GeminiModel || (GeminiModel = {}));
 // ============ Zod Schemas ============
-// 공통 API 키 스키마
-const ApiKeySchema = z.object({
-    gemini_api_key: z.string()
-        .min(1, "Gemini API 키는 필수입니다")
-        .describe("Gemini API 키 (Google AI Studio에서 발급)")
-});
-const GithubTokenSchema = z.object({
-    github_token: z.string()
-        .min(1, "GitHub 토큰은 필수입니다")
-        .describe("GitHub Personal Access Token")
-});
 // 1. blog_start_draft
 export const StartDraftInputSchema = z.object({
     input_type: z.nativeEnum(InputType)
@@ -64,9 +61,15 @@ export const StartDraftInputSchema = z.object({
     language: z.nativeEnum(Language)
         .default(Language.KO)
         .describe("출력 언어"),
+    model: z.nativeEnum(GeminiModel)
+        .default(GeminiModel.FLASH)
+        .describe("사용할 Gemini 모델: gemini-1.5-flash(기본), gemini-1.5-flash-8b, gemini-1.5-pro, gemini-2.0-flash"),
+    instructions: z.string()
+        .optional()
+        .describe("상세 작성 지침 (skill.md 스타일). 글의 톤, 구조, 포함할 내용, 제외할 내용, 타겟 독자, 예시 스타일 등을 상세히 기술"),
     custom_prompt: z.string()
         .optional()
-        .describe("사용자 추가 요청 사항"),
+        .describe("간단한 추가 요청 사항 (instructions보다 짧은 요청에 사용)"),
     gemini_api_key: z.string()
         .min(1, "Gemini API 키는 필수입니다")
         .describe("Gemini API 키")
@@ -85,6 +88,9 @@ export const ApplyFeedbackInputSchema = z.object({
     feedback: z.string()
         .min(1, "피드백 내용은 필수입니다")
         .describe("수정 요청 사항"),
+    model: z.nativeEnum(GeminiModel)
+        .default(GeminiModel.FLASH)
+        .describe("사용할 Gemini 모델"),
     gemini_api_key: z.string()
         .min(1, "Gemini API 키는 필수입니다")
         .describe("Gemini API 키")
@@ -106,9 +112,15 @@ export const StartReviewInputSchema = z.object({
     focus: z.nativeEnum(ReviewFocus)
         .default(ReviewFocus.ALL)
         .describe("검수 초점: accuracy, readability, seo, all"),
+    model: z.nativeEnum(GeminiModel)
+        .default(GeminiModel.FLASH)
+        .describe("사용할 Gemini 모델"),
+    instructions: z.string()
+        .optional()
+        .describe("상세 검수 지침. 검수 기준, 중점 사항, 스타일 가이드 등을 상세히 기술"),
     custom_prompt: z.string()
         .optional()
-        .describe("추가 검수 요청 사항"),
+        .describe("간단한 추가 검수 요청"),
     gemini_api_key: z.string()
         .min(1, "Gemini API 키는 필수입니다")
         .describe("Gemini API 키")
@@ -121,6 +133,9 @@ export const ApplyReviewFeedbackInputSchema = z.object({
     feedback: z.string()
         .min(1, "피드백 내용은 필수입니다")
         .describe("추가 검수 요청 사항"),
+    model: z.nativeEnum(GeminiModel)
+        .default(GeminiModel.FLASH)
+        .describe("사용할 Gemini 모델"),
     gemini_api_key: z.string()
         .min(1, "Gemini API 키는 필수입니다")
         .describe("Gemini API 키")

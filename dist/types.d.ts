@@ -31,26 +31,38 @@ export declare enum TaskType {
     DRAFT = "draft",
     REVIEW = "review"
 }
+export declare enum GeminiModel {
+    FLASH = "gemini-1.5-flash",
+    FLASH_8B = "gemini-1.5-flash-8b",
+    PRO = "gemini-1.5-pro",
+    PRO_2 = "gemini-2.0-flash"
+}
 export declare const StartDraftInputSchema: z.ZodObject<{
     input_type: z.ZodNativeEnum<typeof InputType>;
     content: z.ZodString;
     style: z.ZodDefault<z.ZodNativeEnum<typeof BlogStyle>>;
     language: z.ZodDefault<z.ZodNativeEnum<typeof Language>>;
+    model: z.ZodDefault<z.ZodNativeEnum<typeof GeminiModel>>;
+    instructions: z.ZodOptional<z.ZodString>;
     custom_prompt: z.ZodOptional<z.ZodString>;
     gemini_api_key: z.ZodString;
 }, "strict", z.ZodTypeAny, {
-    gemini_api_key: string;
     input_type: InputType;
     content: string;
     style: BlogStyle;
     language: Language;
+    model: GeminiModel;
+    gemini_api_key: string;
+    instructions?: string | undefined;
     custom_prompt?: string | undefined;
 }, {
-    gemini_api_key: string;
     input_type: InputType;
     content: string;
+    gemini_api_key: string;
     style?: BlogStyle | undefined;
     language?: Language | undefined;
+    model?: GeminiModel | undefined;
+    instructions?: string | undefined;
     custom_prompt?: string | undefined;
 }>;
 export declare const GetStatusInputSchema: z.ZodObject<{
@@ -63,8 +75,10 @@ export declare const GetStatusInputSchema: z.ZodObject<{
 export declare const ApplyFeedbackInputSchema: z.ZodObject<{
     task_id: z.ZodString;
     feedback: z.ZodString;
+    model: z.ZodDefault<z.ZodNativeEnum<typeof GeminiModel>>;
     gemini_api_key: z.ZodString;
 }, "strict", z.ZodTypeAny, {
+    model: GeminiModel;
     gemini_api_key: string;
     task_id: string;
     feedback: string;
@@ -72,6 +86,7 @@ export declare const ApplyFeedbackInputSchema: z.ZodObject<{
     gemini_api_key: string;
     task_id: string;
     feedback: string;
+    model?: GeminiModel | undefined;
 }>;
 export declare const FinalizeDraftInputSchema: z.ZodObject<{
     task_id: z.ZodString;
@@ -84,29 +99,39 @@ export declare const StartReviewInputSchema: z.ZodEffects<z.ZodObject<{
     task_id: z.ZodOptional<z.ZodString>;
     draft: z.ZodOptional<z.ZodString>;
     focus: z.ZodDefault<z.ZodNativeEnum<typeof ReviewFocus>>;
+    model: z.ZodDefault<z.ZodNativeEnum<typeof GeminiModel>>;
+    instructions: z.ZodOptional<z.ZodString>;
     custom_prompt: z.ZodOptional<z.ZodString>;
     gemini_api_key: z.ZodString;
 }, "strict", z.ZodTypeAny, {
+    model: GeminiModel;
     gemini_api_key: string;
     focus: ReviewFocus;
     draft?: string | undefined;
+    instructions?: string | undefined;
     custom_prompt?: string | undefined;
     task_id?: string | undefined;
 }, {
     gemini_api_key: string;
     draft?: string | undefined;
+    model?: GeminiModel | undefined;
+    instructions?: string | undefined;
     custom_prompt?: string | undefined;
     task_id?: string | undefined;
     focus?: ReviewFocus | undefined;
 }>, {
+    model: GeminiModel;
     gemini_api_key: string;
     focus: ReviewFocus;
     draft?: string | undefined;
+    instructions?: string | undefined;
     custom_prompt?: string | undefined;
     task_id?: string | undefined;
 }, {
     gemini_api_key: string;
     draft?: string | undefined;
+    model?: GeminiModel | undefined;
+    instructions?: string | undefined;
     custom_prompt?: string | undefined;
     task_id?: string | undefined;
     focus?: ReviewFocus | undefined;
@@ -114,8 +139,10 @@ export declare const StartReviewInputSchema: z.ZodEffects<z.ZodObject<{
 export declare const ApplyReviewFeedbackInputSchema: z.ZodObject<{
     task_id: z.ZodString;
     feedback: z.ZodString;
+    model: z.ZodDefault<z.ZodNativeEnum<typeof GeminiModel>>;
     gemini_api_key: z.ZodString;
 }, "strict", z.ZodTypeAny, {
+    model: GeminiModel;
     gemini_api_key: string;
     task_id: string;
     feedback: string;
@@ -123,6 +150,7 @@ export declare const ApplyReviewFeedbackInputSchema: z.ZodObject<{
     gemini_api_key: string;
     task_id: string;
     feedback: string;
+    model?: GeminiModel | undefined;
 }>;
 export declare const SaveBlogInputSchema: z.ZodEffects<z.ZodObject<{
     task_id: z.ZodOptional<z.ZodString>;
@@ -160,36 +188,36 @@ export declare const DeployGithubInputSchema: z.ZodEffects<z.ZodObject<{
     commit_message: z.ZodOptional<z.ZodString>;
     github_token: z.ZodString;
 }, "strict", z.ZodTypeAny, {
-    github_token: string;
     repo: string;
     branch: string;
     target_path: string;
+    github_token: string;
     content?: string | undefined;
     task_id?: string | undefined;
     filepath?: string | undefined;
     commit_message?: string | undefined;
 }, {
-    github_token: string;
     repo: string;
     target_path: string;
+    github_token: string;
     content?: string | undefined;
     task_id?: string | undefined;
     filepath?: string | undefined;
     branch?: string | undefined;
     commit_message?: string | undefined;
 }>, {
-    github_token: string;
     repo: string;
     branch: string;
     target_path: string;
+    github_token: string;
     content?: string | undefined;
     task_id?: string | undefined;
     filepath?: string | undefined;
     commit_message?: string | undefined;
 }, {
-    github_token: string;
     repo: string;
     target_path: string;
+    github_token: string;
     content?: string | undefined;
     task_id?: string | undefined;
     filepath?: string | undefined;
