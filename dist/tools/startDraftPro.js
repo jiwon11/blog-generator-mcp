@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { StartDraftProInputSchema, TaskType, TaskStatus } from "../types.js";
 import { createTask } from "../services/database.js";
 import { runProDraftGeneration } from "../services/taskRunner.js";
+import { mergeInstructions } from "../services/instructions.js";
 export function registerStartDraftProTool(server) {
     server.registerTool("blog_start_draft_pro", {
         title: "Start Pro Mode Blog Draft",
@@ -18,6 +19,7 @@ export function registerStartDraftProTool(server) {
 - style: 글 스타일 (기본: deep-dive)
 - language: 출력 언어 (기본: ko)
 - instructions: 상세 작성 지침 (선택)
+- instructions_file: 상세 작성 지침 마크다운 파일 경로 (선택, 병합 지원)
 - gemini_api_key: Gemini API 키 (필수)
 - anthropic_api_key: Anthropic API 키 (필수)
 
@@ -42,6 +44,8 @@ Returns:
     }, async (params) => {
         try {
             const taskId = uuidv4();
+            // instructions 병합 (파일 + 파라미터)
+            const mergedInstructions = await mergeInstructions(params.instructions_file, params.instructions);
             // 작업 생성
             await createTask(taskId, TaskType.DRAFT_PRO, {
                 code_diff: params.code_diff,
@@ -49,10 +53,10 @@ Returns:
                 request: params.request,
                 style: params.style,
                 language: params.language,
-                instructions: params.instructions
+                instructions: mergedInstructions
             });
             // 백그라운드에서 Pro Mode 실행
-            runProDraftGeneration(taskId, params.code_diff, params.dev_log, params.request, params.style, params.language, params.instructions, params.gemini_api_key, params.anthropic_api_key).catch(console.error);
+            runProDraftGeneration(taskId, params.code_diff, params.dev_log, params.request, params.style, params.language, mergedInstructions, params.gemini_api_key, params.anthropic_api_key).catch(console.error);
             const output = {
                 task_id: taskId,
                 status: TaskStatus.PENDING,

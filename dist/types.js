@@ -68,6 +68,9 @@ export const StartDraftInputSchema = z.object({
     instructions: z.string()
         .optional()
         .describe("상세 작성 지침 (skill.md 스타일). 글의 톤, 구조, 포함할 내용, 제외할 내용, 타겟 독자, 예시 스타일 등을 상세히 기술"),
+    instructions_file: z.string()
+        .optional()
+        .describe("상세 작성 지침이 담긴 마크다운 파일 경로. instructions와 함께 사용하면 파일 내용 + 파라미터 내용이 병합됨"),
     custom_prompt: z.string()
         .optional()
         .describe("간단한 추가 요청 사항 (instructions보다 짧은 요청에 사용)"),
@@ -119,6 +122,9 @@ export const StartReviewInputSchema = z.object({
     instructions: z.string()
         .optional()
         .describe("상세 검수 지침. 검수 기준, 중점 사항, 스타일 가이드 등을 상세히 기술"),
+    instructions_file: z.string()
+        .optional()
+        .describe("상세 검수 지침이 담긴 마크다운 파일 경로. instructions와 함께 사용하면 파일 내용 + 파라미터 내용이 병합됨"),
     custom_prompt: z.string()
         .optional()
         .describe("간단한 추가 검수 요청"),
@@ -203,6 +209,9 @@ export const StartDraftProInputSchema = z.object({
     instructions: z.string()
         .optional()
         .describe("상세 작성 지침"),
+    instructions_file: z.string()
+        .optional()
+        .describe("상세 작성 지침이 담긴 마크다운 파일 경로. instructions와 함께 사용하면 파일 내용 + 파라미터 내용이 병합됨"),
     gemini_api_key: z.string()
         .min(1, "Gemini API 키는 필수입니다")
         .describe("Gemini API 키 (Researcher용)"),

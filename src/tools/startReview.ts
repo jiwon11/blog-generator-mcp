@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { StartReviewInputSchema, StartReviewInput, TaskType, TaskStatus, GeminiModel } from "../types.js";
 import { createTask, getTask } from "../services/database.js";
 import { runReviewGeneration } from "../services/taskRunner.js";
+import { mergeInstructions } from "../services/instructions.js";
 
 export function registerStartReviewTool(server: McpServer): void {
   server.registerTool(
@@ -23,7 +24,7 @@ export function registerStartReviewTool(server: McpServer): void {
 - gemini-1.5-flash: 빠른 검수 (기본값)
 - gemini-1.5-pro: 심층 검수
 
-## 상세 검수 지침 (instructions)
+## 상세 검수 지침 (instructions / instructions_file)
 검수 기준을 상세히 지정할 수 있습니다:
 - 회사/팀 스타일 가이드
 - 용어 사용 규칙
@@ -32,12 +33,16 @@ export function registerStartReviewTool(server: McpServer): void {
 - 금지 표현
 등을 명시하면 해당 기준으로 검수합니다.
 
+instructions_file로 마크다운 파일 경로를 지정하면 파일에서 지침을 읽어옵니다.
+둘 다 제공하면 파일 내용 + 파라미터 내용이 병합됩니다.
+
 Args:
   - task_id: 기존 작업 ID (선택)
   - draft: 직접 입력할 초안 내용 (선택)
   - focus: 검수 초점 (기본: all)
   - model: Gemini 모델 (기본: gemini-1.5-flash)
   - instructions: 상세 검수 지침 (선택)
+  - instructions_file: 상세 검수 지침 마크다운 파일 경로 (선택)
   - custom_prompt: 간단한 추가 검수 요청 (선택)
   - gemini_api_key: Gemini API 키 (필수)
 
@@ -94,13 +99,19 @@ Returns:
 
         const taskId = uuidv4();
 
+        // instructions 병합 (파일 + 파라미터)
+        const mergedInstructions = await mergeInstructions(
+          params.instructions_file,
+          params.instructions
+        );
+
         // 검수 작업 생성
         await createTask(taskId, TaskType.REVIEW, {
           source_task_id: params.task_id,
           draft,
           focus: params.focus,
           model,
-          instructions: params.instructions,
+          instructions: mergedInstructions,
           custom_prompt: params.custom_prompt
         });
 
@@ -110,7 +121,7 @@ Returns:
           draft,
           params.focus,
           model,
-          params.instructions,
+          mergedInstructions,
           params.custom_prompt,
           params.gemini_api_key
         ).catch(console.error);

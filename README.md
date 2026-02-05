@@ -305,7 +305,24 @@ User: "오늘 인증 로직 리팩토링한 내용으로 블로그 써줘"
 
 ## 상세 지침 (instructions) 활용하기
 
-`instructions` 파라미터를 사용하면 AI가 따라야 할 상세한 작성 규칙을 지정할 수 있습니다.
+`instructions` 파라미터 또는 `instructions_file`로 마크다운 파일 경로를 지정하여 AI가 따라야 할 상세한 작성 규칙을 지정할 수 있습니다.
+
+### 파일로 관리하기
+
+```
+blog_start_draft 호출:
+- input_type: "keyword"
+- content: "Kubernetes 배포 전략"
+- instructions_file: "./my-style-guide.md"
+```
+
+**둘 다 제공하면 병합됩니다:**
+```
+- instructions_file: "./my-style-guide.md"  // 기본 스타일 가이드
+- instructions: "이번 글은 특히 보안에 집중해줘"  // 추가 요청
+```
+
+→ 파일 내용 + 파라미터 내용이 합쳐져서 적용됩니다.
 
 ### 예시: 회사 블로그 스타일 가이드
 

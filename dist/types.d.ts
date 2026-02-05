@@ -45,6 +45,7 @@ export declare const StartDraftInputSchema: z.ZodObject<{
     language: z.ZodDefault<z.ZodNativeEnum<typeof Language>>;
     model: z.ZodDefault<z.ZodNativeEnum<typeof GeminiModel>>;
     instructions: z.ZodOptional<z.ZodString>;
+    instructions_file: z.ZodOptional<z.ZodString>;
     custom_prompt: z.ZodOptional<z.ZodString>;
     gemini_api_key: z.ZodString;
 }, "strict", z.ZodTypeAny, {
@@ -55,6 +56,7 @@ export declare const StartDraftInputSchema: z.ZodObject<{
     model: GeminiModel;
     gemini_api_key: string;
     instructions?: string | undefined;
+    instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
 }, {
     input_type: InputType;
@@ -64,6 +66,7 @@ export declare const StartDraftInputSchema: z.ZodObject<{
     language?: Language | undefined;
     model?: GeminiModel | undefined;
     instructions?: string | undefined;
+    instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
 }>;
 export declare const GetStatusInputSchema: z.ZodObject<{
@@ -102,6 +105,7 @@ export declare const StartReviewInputSchema: z.ZodEffects<z.ZodObject<{
     focus: z.ZodDefault<z.ZodNativeEnum<typeof ReviewFocus>>;
     model: z.ZodDefault<z.ZodNativeEnum<typeof GeminiModel>>;
     instructions: z.ZodOptional<z.ZodString>;
+    instructions_file: z.ZodOptional<z.ZodString>;
     custom_prompt: z.ZodOptional<z.ZodString>;
     gemini_api_key: z.ZodString;
 }, "strict", z.ZodTypeAny, {
@@ -110,6 +114,7 @@ export declare const StartReviewInputSchema: z.ZodEffects<z.ZodObject<{
     focus: ReviewFocus;
     draft?: string | undefined;
     instructions?: string | undefined;
+    instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
     task_id?: string | undefined;
 }, {
@@ -117,6 +122,7 @@ export declare const StartReviewInputSchema: z.ZodEffects<z.ZodObject<{
     draft?: string | undefined;
     model?: GeminiModel | undefined;
     instructions?: string | undefined;
+    instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
     task_id?: string | undefined;
     focus?: ReviewFocus | undefined;
@@ -126,6 +132,7 @@ export declare const StartReviewInputSchema: z.ZodEffects<z.ZodObject<{
     focus: ReviewFocus;
     draft?: string | undefined;
     instructions?: string | undefined;
+    instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
     task_id?: string | undefined;
 }, {
@@ -133,6 +140,7 @@ export declare const StartReviewInputSchema: z.ZodEffects<z.ZodObject<{
     draft?: string | undefined;
     model?: GeminiModel | undefined;
     instructions?: string | undefined;
+    instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
     task_id?: string | undefined;
     focus?: ReviewFocus | undefined;
@@ -232,6 +240,7 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     style: z.ZodDefault<z.ZodNativeEnum<typeof BlogStyle>>;
     language: z.ZodDefault<z.ZodNativeEnum<typeof Language>>;
     instructions: z.ZodOptional<z.ZodString>;
+    instructions_file: z.ZodOptional<z.ZodString>;
     gemini_api_key: z.ZodString;
     anthropic_api_key: z.ZodString;
 }, "strict", z.ZodTypeAny, {
@@ -241,6 +250,7 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     code_diff: string;
     anthropic_api_key: string;
     instructions?: string | undefined;
+    instructions_file?: string | undefined;
     dev_log?: string | undefined;
     request?: string | undefined;
 }, {
@@ -250,6 +260,7 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     style?: BlogStyle | undefined;
     language?: Language | undefined;
     instructions?: string | undefined;
+    instructions_file?: string | undefined;
     dev_log?: string | undefined;
     request?: string | undefined;
 }>;

@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { StartDraftInputSchema, TaskType, TaskStatus, GeminiModel } from "../types.js";
 import { createTask } from "../services/database.js";
 import { runDraftGeneration } from "../services/taskRunner.js";
+import { mergeInstructions } from "../services/instructions.js";
 export function registerStartDraftTool(server) {
     server.registerTool("blog_start_draft", {
         title: "Start Blog Draft Generation",
@@ -25,7 +26,7 @@ export function registerStartDraftTool(server) {
 - gemini-1.5-pro: 고품질, 복잡한 작업
 - gemini-2.0-flash: 최신 모델
 
-## 상세 지침 (instructions)
+## 상세 지침 (instructions / instructions_file)
 skill.md 스타일로 상세한 작성 지침을 제공할 수 있습니다:
 - 글의 톤과 문체
 - 반드시 포함할 섹션
@@ -35,6 +36,9 @@ skill.md 스타일로 상세한 작성 지침을 제공할 수 있습니다:
 - 코드 스타일 가이드
 등을 상세히 기술하면 모델이 지침을 따릅니다.
 
+instructions_file로 마크다운 파일 경로를 지정하면 파일에서 지침을 읽어옵니다.
+둘 다 제공하면 파일 내용 + 파라미터 내용이 병합됩니다.
+
 Args:
   - input_type: 입력 유형
   - content: 블로그 글 생성에 사용할 입력 내용
@@ -42,6 +46,7 @@ Args:
   - language: 출력 언어 ko/en (기본: ko)
   - model: Gemini 모델 (기본: gemini-1.5-flash)
   - instructions: 상세 작성 지침 (선택)
+  - instructions_file: 상세 작성 지침 마크다운 파일 경로 (선택)
   - custom_prompt: 간단한 추가 요청 (선택)
   - gemini_api_key: Gemini API 키 (필수)
 
@@ -60,6 +65,8 @@ Returns:
         try {
             const taskId = uuidv4();
             const model = params.model || GeminiModel.FLASH;
+            // instructions 병합 (파일 + 파라미터)
+            const mergedInstructions = await mergeInstructions(params.instructions_file, params.instructions);
             // 작업 생성
             await createTask(taskId, TaskType.DRAFT, {
                 input_type: params.input_type,
@@ -67,11 +74,11 @@ Returns:
                 style: params.style,
                 language: params.language,
                 model,
-                instructions: params.instructions,
+                instructions: mergedInstructions,
                 custom_prompt: params.custom_prompt
             });
             // 백그라운드에서 실행 (await 하지 않음)
-            runDraftGeneration(taskId, params.input_type, params.content, params.style, params.language, model, params.instructions, params.custom_prompt, params.gemini_api_key).catch(console.error);
+            runDraftGeneration(taskId, params.input_type, params.content, params.style, params.language, model, mergedInstructions, params.custom_prompt, params.gemini_api_key).catch(console.error);
             const output = {
                 task_id: taskId,
                 status: TaskStatus.PENDING,

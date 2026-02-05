@@ -15,7 +15,7 @@ import { registerApplyFeedbackProTool } from "./tools/applyFeedbackPro.js";
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "blog-generator-mcp",
-    version: "3.0.0"
+    version: "3.1.0"
   });
 
   // Register all tools

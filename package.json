@@ -1,6 +1,6 @@
 {
   "name": "blog-generator-mcp",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "MCP server for automatic blog post generation using Gemini and Claude - supports multi-platform and interactive workflows",
   "type": "module",
   "main": "dist/index.js",
