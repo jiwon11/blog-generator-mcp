@@ -20,7 +20,7 @@ const program = new Command();
 program
     .name("blog-generator-mcp")
     .description("MCP server for automatic blog post generation using Gemini and Claude")
-    .version("2.0.0")
+    .version("3.0.0")
     .option("--stdio", "Run in stdio mode (default)")
     .option("--http", "Run in HTTP server mode")
     .option("--port <number>", "HTTP server port", "3000")

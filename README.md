@@ -15,6 +15,7 @@ npx blog-generator-mcp
 ### 2. API 키 준비
 
 - **Gemini API 키**: [Google AI Studio](https://aistudio.google.com/app/apikey)에서 발급
+- **Anthropic API 키** (Pro Mode용): [Anthropic Console](https://console.anthropic.com/)에서 발급
 
 ### 3. Claude Desktop 설정
 
@@ -45,6 +46,96 @@ Claude Desktop을 재시작하면 사용 준비 완료!
 3. blog_apply_feedback → (선택) 피드백 반영
 4. blog_start_review   → 검수 시작
 5. blog_save           → 파일 저장
+```
+
+### Pro Mode 워크플로우
+
+**Gemini(분석) + Claude(작성)** 파이프라인으로 고품질 블로그 생성:
+
+```
+1. blog_start_draft_pro    → Gemini 분석 → Claude 작성
+2. blog_get_status         → 완료 확인
+3. blog_apply_feedback_pro → (선택) Claude로 피드백 반영
+4. blog_start_review       → (선택) Gemini로 교차 검토
+5. blog_save               → 파일 저장
+```
+
+---
+
+## Pro Mode (v3.0)
+
+Pro Mode는 **Gemini**와 **Claude**의 역할을 분담하여 마스터피스급 기술 블로그를 생성합니다.
+
+### 아키텍처
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    blog_start_draft_pro                      │
+│  ┌─────────────────┐         ┌─────────────────┐           │
+│  │ Gemini Pro      │ ──────> │ Claude Opus     │           │
+│  │ (Researcher)    │ 분석결과 │ (Writer)        │           │
+│  │                 │         │                 │           │
+│  │ - code_diff     │         │ - 분석 기반     │           │
+│  │ - dev_log 분석  │         │ - 서사적 글쓰기 │           │
+│  │ - 아키텍처 해석 │         │ - 인사이트 도출 │           │
+│  └─────────────────┘         └─────────────────┘           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### blog_start_draft_pro - Pro 초안 생성
+
+**필수 파라미터:**
+```json
+{
+  "code_diff": "git diff 또는 변경된 코드",
+  "gemini_api_key": "YOUR_GEMINI_KEY",
+  "anthropic_api_key": "YOUR_ANTHROPIC_KEY"
+}
+```
+
+**선택 파라미터:**
+| 파라미터 | 설명 | 기본값 |
+|---------|------|-------|
+| `dev_log` | 개발자의 고민/메모/의사결정 과정 | - |
+| `request` | 최우선 제약조건 (이 요청을 최우선으로 반영) | - |
+| `style` | 글 스타일 | `deep-dive` |
+| `language` | 언어 | `ko` |
+| `instructions` | 상세 작성 지침 | - |
+
+### blog_apply_feedback_pro - Pro 피드백 반영
+
+**파라미터:**
+```json
+{
+  "task_id": "Pro 작업 ID",
+  "feedback": "수정 요청 사항",
+  "anthropic_api_key": "YOUR_ANTHROPIC_KEY"
+}
+```
+
+### Pro Mode 사용 예시
+
+```
+User: "오늘 인증 로직 리팩토링한 내용으로 블로그 써줘"
+
+1. blog_start_draft_pro
+   - code_diff: "<git diff 내용>"
+   - dev_log: "기존 세션 기반에서 JWT로 전환. 보안 강화가 목표..."
+   - request: "보안 관점에서 왜 이 방식을 선택했는지 강조"
+   - gemini_api_key: "..."
+   - anthropic_api_key: "..."
+
+2. blog_get_status (완료 확인)
+
+3. blog_apply_feedback_pro (선택)
+   - feedback: "코드 예제에 주석을 더 추가해줘"
+   - anthropic_api_key: "..."
+
+4. blog_start_review (Gemini 교차 검토)
+   - focus: "accuracy"
+
+5. blog_save
+   - directory: "./posts"
 ```
 
 ---

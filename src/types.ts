@@ -36,7 +36,8 @@ export enum TaskStatus {
 
 export enum TaskType {
   DRAFT = "draft",
-  REVIEW = "review"
+  REVIEW = "review",
+  DRAFT_PRO = "draft_pro"
 }
 
 // Gemini 모델 선택
@@ -200,6 +201,48 @@ export const DeployGithubInputSchema = z.object({
   { message: "task_id, content, filepath 중 하나는 필수입니다" }
 );
 
+// 9. blog_start_draft_pro (Pro Mode)
+export const StartDraftProInputSchema = z.object({
+  code_diff: z.string()
+    .min(1, "코드 변경사항은 필수입니다")
+    .max(100000, "코드가 너무 깁니다")
+    .describe("Git diff 또는 변경된 코드"),
+  dev_log: z.string()
+    .optional()
+    .describe("개발자의 고민/메모/의사결정 과정"),
+  request: z.string()
+    .optional()
+    .describe("최우선 제약조건 - 이 요청사항을 최우선으로 반영"),
+  style: z.nativeEnum(BlogStyle)
+    .default(BlogStyle.DEEP_DIVE)
+    .describe("블로그 글 스타일"),
+  language: z.nativeEnum(Language)
+    .default(Language.KO)
+    .describe("출력 언어"),
+  instructions: z.string()
+    .optional()
+    .describe("상세 작성 지침"),
+  gemini_api_key: z.string()
+    .min(1, "Gemini API 키는 필수입니다")
+    .describe("Gemini API 키 (Researcher용)"),
+  anthropic_api_key: z.string()
+    .min(1, "Anthropic API 키는 필수입니다")
+    .describe("Anthropic API 키 (Writer용)")
+}).strict();
+
+// 10. blog_apply_feedback_pro (Pro Mode)
+export const ApplyFeedbackProInputSchema = z.object({
+  task_id: z.string()
+    .min(1, "작업 ID는 필수입니다")
+    .describe("피드백을 적용할 Pro 작업 ID"),
+  feedback: z.string()
+    .min(1, "피드백 내용은 필수입니다")
+    .describe("수정 요청 사항"),
+  anthropic_api_key: z.string()
+    .min(1, "Anthropic API 키는 필수입니다")
+    .describe("Anthropic API 키")
+}).strict();
+
 // ============ Type Exports ============
 export type StartDraftInput = z.infer<typeof StartDraftInputSchema>;
 export type GetStatusInput = z.infer<typeof GetStatusInputSchema>;
@@ -209,6 +252,8 @@ export type StartReviewInput = z.infer<typeof StartReviewInputSchema>;
 export type ApplyReviewFeedbackInput = z.infer<typeof ApplyReviewFeedbackInputSchema>;
 export type SaveBlogInput = z.infer<typeof SaveBlogInputSchema>;
 export type DeployGithubInput = z.infer<typeof DeployGithubInputSchema>;
+export type StartDraftProInput = z.infer<typeof StartDraftProInputSchema>;
+export type ApplyFeedbackProInput = z.infer<typeof ApplyFeedbackProInputSchema>;
 
 // ============ Response Types ============
 export interface BlogMetadata {
@@ -224,6 +269,7 @@ export interface TaskResult {
   improved?: string;
   metadata?: BlogMetadata;
   changes?: string[];
+  analysis?: Record<string, unknown>;  // Pro Mode 분석 결과
 }
 
 export interface FeedbackEntry {
@@ -278,4 +324,15 @@ export interface DeployOutput {
   url: string;
   deployed: boolean;
   message: string;
+}
+
+// Pro Mode 분석 결과 (Gemini Researcher 출력)
+export interface GeminiAnalysis {
+  [key: string]: unknown;
+  summary: string;
+  problem: string;
+  approach: string;
+  key_decisions: string[];
+  technical_insights: string[];
+  narrative_hooks: string[];
 }

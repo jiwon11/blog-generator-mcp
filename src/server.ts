@@ -9,11 +9,13 @@ import { registerStartReviewTool } from "./tools/startReview.js";
 import { registerApplyReviewFeedbackTool } from "./tools/applyReviewFeedback.js";
 import { registerSaveBlogTool } from "./tools/saveBlog.js";
 import { registerDeployGithubTool } from "./tools/deployGithub.js";
+import { registerStartDraftProTool } from "./tools/startDraftPro.js";
+import { registerApplyFeedbackProTool } from "./tools/applyFeedbackPro.js";
 
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "blog-generator-mcp",
-    version: "2.0.0"
+    version: "3.0.0"
   });
 
   // Register all tools
@@ -25,6 +27,10 @@ export function createServer(): McpServer {
   registerApplyReviewFeedbackTool(server);
   registerSaveBlogTool(server);
   registerDeployGithubTool(server);
+
+  // Pro Mode tools
+  registerStartDraftProTool(server);
+  registerApplyFeedbackProTool(server);
 
   return server;
 }

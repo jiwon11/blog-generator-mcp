@@ -1,5 +1,6 @@
 import { getTask, updateTaskStatus, updateTaskResult, updateTaskError } from "./database.js";
-import { generateBlogDraft, applyFeedbackToDraft } from "./gemini.js";
+import { generateBlogDraft, applyFeedbackToDraft, analyzeCodeWithGemini } from "./gemini.js";
+import { writeBlogWithClaude, applyFeedbackWithClaude } from "./anthropic.js";
 import { TaskStatus, TaskType } from "../types.js";
 let notificationCallback = null;
 export function setNotificationCallback(callback) {
@@ -96,5 +97,64 @@ export async function runReviewGeneration(taskId, draft, focus, model, instructi
 async function generateReview(draft, focus, model, instructions, customPrompt, apiKey) {
     const { reviewBlogDraft } = await import("./gemini.js");
     return reviewBlogDraft(draft, focus, model, instructions, customPrompt, apiKey);
+}
+// ============ Pro Mode Functions ============
+/**
+ * Pro Mode: Gemini(분석) → Claude(작성) 파이프라인
+ */
+export async function runProDraftGeneration(taskId, codeDiff, devLog, request, style, language, instructions, geminiApiKey, anthropicApiKey) {
+    try {
+        // 1단계: Gemini로 코드 분석 (Researcher)
+        await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
+        sendNotification(taskId, TaskStatus.IN_PROGRESS, "Pro Mode: Gemini가 코드를 분석 중입니다...");
+        const analysis = await analyzeCodeWithGemini(codeDiff, devLog, request, geminiApiKey);
+        await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 40);
+        sendNotification(taskId, TaskStatus.IN_PROGRESS, `분석 완료: "${analysis.summary}" - Claude가 글을 작성 중입니다...`);
+        // 2단계: Claude로 블로그 작성 (Writer)
+        const result = await writeBlogWithClaude(analysis, codeDiff, style, language, instructions, anthropicApiKey);
+        await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
+        // 결과 저장 (분석 결과도 함께 저장)
+        const taskResult = {
+            draft: result.draft,
+            metadata: result.metadata,
+            analysis: analysis
+        };
+        await updateTaskResult(taskId, taskResult);
+        sendNotification(taskId, TaskStatus.COMPLETED, `Pro Mode 블로그 생성 완료: "${result.metadata.title}"`);
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+        await updateTaskError(taskId, errorMessage);
+        sendNotification(taskId, TaskStatus.FAILED, `Pro Mode 생성 실패: ${errorMessage}`);
+    }
+}
+/**
+ * Pro Mode: Claude로 피드백 반영
+ */
+export async function runProFeedbackApplication(taskId, feedback, anthropicApiKey) {
+    try {
+        const task = await getTask(taskId);
+        if (!task || !task.result?.draft) {
+            throw new Error("기존 초안을 찾을 수 없습니다");
+        }
+        await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
+        sendNotification(taskId, TaskStatus.IN_PROGRESS, "Pro Mode: Claude가 피드백을 반영 중입니다...");
+        // Claude로 피드백 반영
+        const result = await applyFeedbackWithClaude(task.result.draft, feedback, anthropicApiKey);
+        await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
+        // 결과 업데이트 (기존 분석 결과 유지)
+        const taskResult = {
+            draft: result.draft,
+            metadata: result.metadata,
+            analysis: task.result.analysis
+        };
+        await updateTaskResult(taskId, taskResult);
+        sendNotification(taskId, TaskStatus.COMPLETED, "Pro Mode 피드백 반영 완료. blog_get_status로 결과를 확인하세요.");
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+        await updateTaskError(taskId, errorMessage);
+        sendNotification(taskId, TaskStatus.FAILED, `Pro Mode 피드백 반영 실패: ${errorMessage}`);
+    }
 }
 //# sourceMappingURL=taskRunner.js.map

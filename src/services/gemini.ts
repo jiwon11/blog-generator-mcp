@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus, GeminiModel } from "../types.js";
+import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus, GeminiModel, GeminiAnalysis } from "../types.js";
 
 interface GenerateResult {
   draft: string;
@@ -370,5 +370,98 @@ ${draft}
       throw new Error(`검수 오류: ${error.message}`);
     }
     throw new Error("알 수 없는 오류가 발생했습니다.");
+  }
+}
+
+/**
+ * Pro Mode: Gemini로 코드 분석 (Researcher 역할)
+ */
+export async function analyzeCodeWithGemini(
+  codeDiff: string,
+  devLog: string | undefined,
+  request: string | undefined,
+  apiKey: string
+): Promise<GeminiAnalysis> {
+  if (!apiKey) {
+    throw new Error("Gemini API 키가 필요합니다.");
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  // Pro Mode에서는 gemini-1.5-pro 사용 (더 정확한 분석)
+  const genModel = genAI.getGenerativeModel({ model: GeminiModel.PRO });
+
+  const prompt = `당신은 코드 분석 전문가입니다. 개발자의 작업 내용을 분석하여
+Writer AI가 블로그 글을 작성할 수 있도록 구조화된 분석을 제공하세요.
+
+## 분석할 내용
+1. 코드 변경사항의 목적과 의도
+2. 아키텍처적 결정과 그 이유
+3. 해결한 문제와 접근 방식
+4. 주목할 만한 기술적 패턴이나 트릭
+
+## 입력
+
+### Code Diff
+\`\`\`
+${codeDiff}
+\`\`\`
+
+${devLog ? `### Dev Log (개발자 메모)\n${devLog}` : ""}
+
+${request ? `### 최우선 제약조건 (반드시 반영)\n${request}` : ""}
+
+## 출력 형식
+반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요:
+
+\`\`\`json
+{
+  "summary": "핵심 요약 (1-2문장)",
+  "problem": "해결한 문제",
+  "approach": "접근 방식과 이유",
+  "key_decisions": ["주요 결정 사항 1", "주요 결정 사항 2"],
+  "technical_insights": ["기술적 인사이트 1", "기술적 인사이트 2"],
+  "narrative_hooks": ["글에서 강조할 포인트 1", "글에서 강조할 포인트 2"]
+}
+\`\`\``;
+
+  try {
+    const result = await genModel.generateContent(prompt);
+    const response = result.response.text();
+
+    // JSON 파싱
+    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+    if (!jsonMatch) {
+      // JSON 블록이 없으면 전체를 JSON으로 파싱 시도
+      try {
+        return JSON.parse(response.trim()) as GeminiAnalysis;
+      } catch {
+        throw new Error("분석 결과 파싱 실패: JSON 형식이 아닙니다.");
+      }
+    }
+
+    const analysis = JSON.parse(jsonMatch[1]) as GeminiAnalysis;
+
+    // 필수 필드 검증
+    if (!analysis.summary || !analysis.problem || !analysis.approach) {
+      throw new Error("분석 결과에 필수 필드가 누락되었습니다.");
+    }
+
+    // 배열 필드 기본값 설정
+    analysis.key_decisions = analysis.key_decisions || [];
+    analysis.technical_insights = analysis.technical_insights || [];
+    analysis.narrative_hooks = analysis.narrative_hooks || [];
+
+    return analysis;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes("API_KEY")) {
+        throw new Error("잘못된 Gemini API 키입니다.");
+      }
+      if (error.message.includes("quota")) {
+        throw new Error("Gemini API 할당량이 초과되었습니다.");
+      }
+      throw new Error(`코드 분석 오류: ${error.message}`);
+    }
+    throw new Error("코드 분석 중 알 수 없는 오류가 발생했습니다.");
   }
 }

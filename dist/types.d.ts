@@ -29,7 +29,8 @@ export declare enum TaskStatus {
 }
 export declare enum TaskType {
     DRAFT = "draft",
-    REVIEW = "review"
+    REVIEW = "review",
+    DRAFT_PRO = "draft_pro"
 }
 export declare enum GeminiModel {
     FLASH = "gemini-1.5-flash",
@@ -224,6 +225,47 @@ export declare const DeployGithubInputSchema: z.ZodEffects<z.ZodObject<{
     branch?: string | undefined;
     commit_message?: string | undefined;
 }>;
+export declare const StartDraftProInputSchema: z.ZodObject<{
+    code_diff: z.ZodString;
+    dev_log: z.ZodOptional<z.ZodString>;
+    request: z.ZodOptional<z.ZodString>;
+    style: z.ZodDefault<z.ZodNativeEnum<typeof BlogStyle>>;
+    language: z.ZodDefault<z.ZodNativeEnum<typeof Language>>;
+    instructions: z.ZodOptional<z.ZodString>;
+    gemini_api_key: z.ZodString;
+    anthropic_api_key: z.ZodString;
+}, "strict", z.ZodTypeAny, {
+    style: BlogStyle;
+    language: Language;
+    gemini_api_key: string;
+    code_diff: string;
+    anthropic_api_key: string;
+    instructions?: string | undefined;
+    dev_log?: string | undefined;
+    request?: string | undefined;
+}, {
+    gemini_api_key: string;
+    code_diff: string;
+    anthropic_api_key: string;
+    style?: BlogStyle | undefined;
+    language?: Language | undefined;
+    instructions?: string | undefined;
+    dev_log?: string | undefined;
+    request?: string | undefined;
+}>;
+export declare const ApplyFeedbackProInputSchema: z.ZodObject<{
+    task_id: z.ZodString;
+    feedback: z.ZodString;
+    anthropic_api_key: z.ZodString;
+}, "strict", z.ZodTypeAny, {
+    task_id: string;
+    feedback: string;
+    anthropic_api_key: string;
+}, {
+    task_id: string;
+    feedback: string;
+    anthropic_api_key: string;
+}>;
 export type StartDraftInput = z.infer<typeof StartDraftInputSchema>;
 export type GetStatusInput = z.infer<typeof GetStatusInputSchema>;
 export type ApplyFeedbackInput = z.infer<typeof ApplyFeedbackInputSchema>;
@@ -232,6 +274,8 @@ export type StartReviewInput = z.infer<typeof StartReviewInputSchema>;
 export type ApplyReviewFeedbackInput = z.infer<typeof ApplyReviewFeedbackInputSchema>;
 export type SaveBlogInput = z.infer<typeof SaveBlogInputSchema>;
 export type DeployGithubInput = z.infer<typeof DeployGithubInputSchema>;
+export type StartDraftProInput = z.infer<typeof StartDraftProInputSchema>;
+export type ApplyFeedbackProInput = z.infer<typeof ApplyFeedbackProInputSchema>;
 export interface BlogMetadata {
     [key: string]: unknown;
     title: string;
@@ -244,6 +288,7 @@ export interface TaskResult {
     improved?: string;
     metadata?: BlogMetadata;
     changes?: string[];
+    analysis?: Record<string, unknown>;
 }
 export interface FeedbackEntry {
     feedback: string;
@@ -291,5 +336,14 @@ export interface DeployOutput {
     url: string;
     deployed: boolean;
     message: string;
+}
+export interface GeminiAnalysis {
+    [key: string]: unknown;
+    summary: string;
+    problem: string;
+    approach: string;
+    key_decisions: string[];
+    technical_insights: string[];
+    narrative_hooks: string[];
 }
 //# sourceMappingURL=types.d.ts.map
