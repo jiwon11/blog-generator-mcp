@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { ApplyReviewFeedbackInputSchema, ApplyReviewFeedbackInput, TaskStatus, TaskType, GeminiModel } from "../types.js";
+import { ApplyReviewFeedbackInputSchema, ApplyReviewFeedbackInput, TaskStatus, TaskType, GeminiModel, ReviewOutputSchema } from "../types.js";
 import { getTask, addFeedbackToHistory } from "../services/database.js";
 import { runFeedbackApplication } from "../services/taskRunner.js";
 import { getGeminiApiKey } from "../services/env.js";
@@ -26,6 +26,7 @@ Returns:
   - status: "pending"
   - message: 안내 메시지`,
       inputSchema: ApplyReviewFeedbackInputSchema,
+      outputSchema: ReviewOutputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,

@@ -61,7 +61,7 @@ export async function createTask(
   type: TaskType,
   input: Record<string, unknown>
 ): Promise<Task> {
-  if (!db) throw new Error("Database not initialized");
+  if (!db) throw new Error("데이터베이스가 초기화되지 않았습니다");
 
   const now = new Date().toISOString();
   const task: Task = {
@@ -99,7 +99,7 @@ export async function createTask(
 }
 
 export async function getTask(id: string): Promise<Task | null> {
-  if (!db) throw new Error("Database not initialized");
+  if (!db) throw new Error("데이터베이스가 초기화되지 않았습니다");
 
   const result = db.exec(`SELECT * FROM tasks WHERE id = ?`, [id]);
 
@@ -134,7 +134,7 @@ export async function updateTaskStatus(
   status: TaskStatus,
   progress?: number
 ): Promise<void> {
-  if (!db) throw new Error("Database not initialized");
+  if (!db) throw new Error("데이터베이스가 초기화되지 않았습니다");
 
   const now = new Date().toISOString();
 
@@ -157,7 +157,7 @@ export async function updateTaskResult(
   id: string,
   result: TaskResult
 ): Promise<void> {
-  if (!db) throw new Error("Database not initialized");
+  if (!db) throw new Error("데이터베이스가 초기화되지 않았습니다");
 
   const now = new Date().toISOString();
   db.run(
@@ -172,7 +172,7 @@ export async function updateTaskError(
   id: string,
   error: string
 ): Promise<void> {
-  if (!db) throw new Error("Database not initialized");
+  if (!db) throw new Error("데이터베이스가 초기화되지 않았습니다");
 
   const now = new Date().toISOString();
   db.run(
@@ -187,10 +187,10 @@ export async function addFeedbackToHistory(
   id: string,
   feedback: string
 ): Promise<void> {
-  if (!db) throw new Error("Database not initialized");
+  if (!db) throw new Error("데이터베이스가 초기화되지 않았습니다");
 
   const task = await getTask(id);
-  if (!task) throw new Error(`Task not found: ${id}`);
+  if (!task) throw new Error(`작업을 찾을 수 없습니다: ${id}`);
 
   const entry: FeedbackEntry = {
     feedback,
@@ -209,7 +209,7 @@ export async function addFeedbackToHistory(
 }
 
 export async function cleanupOldTasks(daysOld: number = 7): Promise<number> {
-  if (!db) throw new Error("Database not initialized");
+  if (!db) throw new Error("데이터베이스가 초기화되지 않았습니다");
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - daysOld);

@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { SaveBlogInputSchema, SaveBlogInput, SaveOutput, TaskStatus } from "../types.js";
+import { SaveBlogInputSchema, SaveBlogInput, SaveOutput, TaskStatus, SaveOutputSchema } from "../types.js";
 import { getTask } from "../services/database.js";
 import { getBlogSaveDirectory } from "../services/env.js";
 
@@ -43,6 +43,7 @@ Returns:
   - filepath: 저장된 파일의 전체 경로
   - message: 안내 메시지`,
       inputSchema: SaveBlogInputSchema,
+      outputSchema: SaveOutputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,

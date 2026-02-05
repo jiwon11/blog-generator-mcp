@@ -12,6 +12,7 @@ export declare const ENV_KEYS: {
 export declare function getGeminiApiKey(paramValue?: string): string;
 /**
  * Anthropic API 키를 가져옵니다 (파라미터 우선, 없으면 환경변수)
+ * Pro Mode (HTTP 모드)에서만 필요
  */
 export declare function getAnthropicApiKey(paramValue?: string): string;
 /**

@@ -88,7 +88,7 @@ ${customPrompt}`;
 function parseResponse(response) {
     const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```\s*$/);
     let metadata = {
-        title: "Untitled",
+        title: "제목 없음",
         tags: [],
         estimatedReadTime: "5분"
     };

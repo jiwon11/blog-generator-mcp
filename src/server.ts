@@ -9,13 +9,15 @@ import { registerStartReviewTool } from "./tools/startReview.js";
 import { registerApplyReviewFeedbackTool } from "./tools/applyReviewFeedback.js";
 import { registerSaveBlogTool } from "./tools/saveBlog.js";
 import { registerDeployGithubTool } from "./tools/deployGithub.js";
+
+// Pro Mode (HTTP 모드 전용)
 import { registerStartDraftProTool } from "./tools/startDraftPro.js";
 import { registerApplyFeedbackProTool } from "./tools/applyFeedbackPro.js";
 
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "blog-generator-mcp",
-    version: "3.2.0"
+    version: "4.1.0"
   });
 
   // Register all tools
@@ -28,7 +30,7 @@ export function createServer(): McpServer {
   registerSaveBlogTool(server);
   registerDeployGithubTool(server);
 
-  // Pro Mode tools
+  // Pro Mode (HTTP 모드 전용 - Anthropic API 필요)
   registerStartDraftProTool(server);
   registerApplyFeedbackProTool(server);
 

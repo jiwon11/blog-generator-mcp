@@ -1,1 +1,1 @@
-{"version":3,"file":"deployGithub.d.ts","sourceRoot":"","sources":["../../src/tools/deployGithub.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,MAAM,yCAAyC,CAAC;AAKpE,wBAAgB,wBAAwB,CAAC,MAAM,EAAE,SAAS,GAAG,IAAI,CAmHhE"}
+{"version":3,"file":"deployGithub.d.ts","sourceRoot":"","sources":["../../src/tools/deployGithub.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,MAAM,yCAAyC,CAAC;AAKpE,wBAAgB,wBAAwB,CAAC,MAAM,EAAE,SAAS,GAAG,IAAI,CAoHhE"}

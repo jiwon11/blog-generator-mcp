@@ -121,7 +121,7 @@ function parseResponse(response: string): GenerateResult {
   const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```\s*$/);
 
   let metadata: BlogMetadata = {
-    title: "Untitled",
+    title: "제목 없음",
     tags: [],
     estimatedReadTime: "5분"
   };

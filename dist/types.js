@@ -188,7 +188,7 @@ export const DeployGithubInputSchema = z.object({
         .min(1, "GitHub 토큰은 필수입니다")
         .describe("GitHub Personal Access Token")
 }).strict().refine((data) => data.task_id || data.content || data.filepath, { message: "task_id, content, filepath 중 하나는 필수입니다" });
-// 9. blog_start_draft_pro (Pro Mode)
+// 9. blog_start_draft_pro (Pro Mode - HTTP 모드 전용)
 export const StartDraftProInputSchema = z.object({
     code_diff: z.string()
         .min(1, "코드 변경사항은 필수입니다")
@@ -219,7 +219,7 @@ export const StartDraftProInputSchema = z.object({
         .optional()
         .describe("Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)")
 }).strict();
-// 10. blog_apply_feedback_pro (Pro Mode)
+// 10. blog_apply_feedback_pro (Pro Mode - HTTP 모드 전용)
 export const ApplyFeedbackProInputSchema = z.object({
     task_id: z.string()
         .min(1, "작업 ID는 필수입니다")
@@ -231,4 +231,64 @@ export const ApplyFeedbackProInputSchema = z.object({
         .optional()
         .describe("Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)")
 }).strict();
+// ============ Output Zod Schemas (for MCP outputSchema) ============
+// 블로그 메타데이터 스키마
+export const BlogMetadataOutputSchema = z.object({
+    title: z.string().describe("블로그 글 제목"),
+    tags: z.array(z.string()).describe("태그 목록"),
+    estimatedReadTime: z.string().describe("예상 읽기 시간")
+}).passthrough();
+// 작업 결과 스키마
+export const TaskResultOutputSchema = z.object({
+    draft: z.string().optional().describe("생성된 초안"),
+    improved: z.string().optional().describe("개선된 글"),
+    metadata: BlogMetadataOutputSchema.optional().describe("메타데이터"),
+    changes: z.array(z.string()).optional().describe("변경 사항 목록"),
+    analysis: z.record(z.unknown()).optional().describe("Pro Mode 분석 결과")
+}).passthrough();
+// blog_start_draft, blog_apply_feedback 출력 스키마
+export const StartTaskOutputSchema = z.object({
+    task_id: z.string().describe("작업 추적용 고유 ID"),
+    status: z.nativeEnum(TaskStatus).describe("작업 상태"),
+    model: z.string().optional().describe("사용된 AI 모델"),
+    message: z.string().describe("안내 메시지")
+}).passthrough();
+// blog_get_status 출력 스키마
+export const GetStatusOutputSchema = z.object({
+    task_id: z.string().describe("작업 ID"),
+    status: z.nativeEnum(TaskStatus).describe("작업 상태: pending, in_progress, completed, failed"),
+    progress: z.number().min(0).max(100).describe("진행률 (0-100)"),
+    result: TaskResultOutputSchema.optional().describe("완료 시 결과"),
+    error: z.string().optional().describe("실패 시 오류 메시지")
+}).passthrough();
+// blog_finalize_draft 출력 스키마
+export const FinalizeOutputSchema = z.object({
+    draft: z.string().describe("최종 확정된 블로그 초안"),
+    metadata: BlogMetadataOutputSchema.describe("블로그 메타데이터"),
+    message: z.string().describe("안내 메시지")
+}).passthrough();
+// blog_save 출력 스키마
+export const SaveOutputSchema = z.object({
+    filepath: z.string().describe("저장된 파일의 전체 경로"),
+    message: z.string().describe("안내 메시지")
+}).passthrough();
+// blog_deploy_github 출력 스키마
+export const DeployOutputSchema = z.object({
+    url: z.string().describe("GitHub 커밋 URL"),
+    deployed: z.boolean().describe("배포 성공 여부"),
+    message: z.string().describe("안내 메시지")
+}).passthrough();
+// blog_start_review, blog_apply_review_feedback 출력 스키마
+export const ReviewOutputSchema = z.object({
+    task_id: z.string().describe("작업 ID"),
+    status: z.nativeEnum(TaskStatus).describe("작업 상태"),
+    model: z.string().optional().describe("사용된 AI 모델"),
+    message: z.string().describe("안내 메시지")
+}).passthrough();
+// blog_start_draft_pro 출력 스키마
+export const StartDraftProOutputSchema = z.object({
+    task_id: z.string().describe("작업 추적용 고유 ID"),
+    status: z.nativeEnum(TaskStatus).describe("작업 상태"),
+    message: z.string().describe("안내 메시지")
+}).passthrough();
 //# sourceMappingURL=types.js.map

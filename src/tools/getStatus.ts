@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { GetStatusInputSchema, GetStatusInput, GetStatusOutput } from "../types.js";
+import { GetStatusInputSchema, GetStatusInput, GetStatusOutput, GetStatusOutputSchema } from "../types.js";
 import { getTask } from "../services/database.js";
 
 export function registerGetStatusTool(server: McpServer): void {
@@ -19,6 +19,7 @@ Returns:
   - result: 완료 시 결과 (draft, metadata 등)
   - error: 실패 시 오류 메시지`,
       inputSchema: GetStatusInputSchema,
+      outputSchema: GetStatusOutputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,

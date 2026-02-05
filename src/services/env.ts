@@ -24,13 +24,15 @@ export function getGeminiApiKey(paramValue?: string): string {
 
 /**
  * Anthropic API 키를 가져옵니다 (파라미터 우선, 없으면 환경변수)
+ * Pro Mode (HTTP 모드)에서만 필요
  */
 export function getAnthropicApiKey(paramValue?: string): string {
   const key = paramValue || process.env[ENV_KEYS.ANTHROPIC_API_KEY];
   if (!key) {
     throw new Error(
       "Anthropic API 키가 필요합니다. " +
-      "anthropic_api_key 파라미터로 전달하거나 ANTHROPIC_API_KEY 환경변수를 설정하세요."
+      "anthropic_api_key 파라미터로 전달하거나 ANTHROPIC_API_KEY 환경변수를 설정하세요. " +
+      "(Pro Mode는 HTTP 모드에서만 필요합니다. Claude Desktop/Code 환경에서는 Claude에게 직접 요청하세요.)"
     );
   }
   return key;

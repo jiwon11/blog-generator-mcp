@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { StartDraftInputSchema, TaskType, TaskStatus, GeminiModel } from "../types.js";
+import { StartDraftInputSchema, TaskType, TaskStatus, GeminiModel, StartTaskOutputSchema } from "../types.js";
 import { createTask } from "../services/database.js";
 import { runDraftGeneration } from "../services/taskRunner.js";
 import { mergeInstructions } from "../services/instructions.js";
@@ -56,6 +56,7 @@ Returns:
   - status: "pending"
   - message: 안내 메시지`,
         inputSchema: StartDraftInputSchema,
+        outputSchema: StartTaskOutputSchema,
         annotations: {
             readOnlyHint: false,
             destructiveHint: false,

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { StartReviewInputSchema, TaskType, TaskStatus, GeminiModel } from "../types.js";
+import { StartReviewInputSchema, TaskType, TaskStatus, GeminiModel, ReviewOutputSchema } from "../types.js";
 import { createTask, getTask } from "../services/database.js";
 import { runReviewGeneration } from "../services/taskRunner.js";
 import { mergeInstructions } from "../services/instructions.js";
@@ -48,6 +48,7 @@ Returns:
   - status: "pending"
   - message: 안내 메시지`,
         inputSchema: StartReviewInputSchema,
+        outputSchema: ReviewOutputSchema,
         annotations: {
             readOnlyHint: false,
             destructiveHint: false,

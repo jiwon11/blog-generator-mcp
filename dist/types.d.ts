@@ -348,6 +348,372 @@ export interface DeployOutput {
     deployed: boolean;
     message: string;
 }
+export declare const BlogMetadataOutputSchema: z.ZodObject<{
+    title: z.ZodString;
+    tags: z.ZodArray<z.ZodString, "many">;
+    estimatedReadTime: z.ZodString;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    title: z.ZodString;
+    tags: z.ZodArray<z.ZodString, "many">;
+    estimatedReadTime: z.ZodString;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    title: z.ZodString;
+    tags: z.ZodArray<z.ZodString, "many">;
+    estimatedReadTime: z.ZodString;
+}, z.ZodTypeAny, "passthrough">>;
+export declare const TaskResultOutputSchema: z.ZodObject<{
+    draft: z.ZodOptional<z.ZodString>;
+    improved: z.ZodOptional<z.ZodString>;
+    metadata: z.ZodOptional<z.ZodObject<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">>>;
+    changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    draft: z.ZodOptional<z.ZodString>;
+    improved: z.ZodOptional<z.ZodString>;
+    metadata: z.ZodOptional<z.ZodObject<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">>>;
+    changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    draft: z.ZodOptional<z.ZodString>;
+    improved: z.ZodOptional<z.ZodString>;
+    metadata: z.ZodOptional<z.ZodObject<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">>>;
+    changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+}, z.ZodTypeAny, "passthrough">>;
+export declare const StartTaskOutputSchema: z.ZodObject<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    model: z.ZodOptional<z.ZodString>;
+    message: z.ZodString;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    model: z.ZodOptional<z.ZodString>;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    model: z.ZodOptional<z.ZodString>;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">>;
+export declare const GetStatusOutputSchema: z.ZodObject<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    progress: z.ZodNumber;
+    result: z.ZodOptional<z.ZodObject<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, z.ZodTypeAny, "passthrough">>>;
+    error: z.ZodOptional<z.ZodString>;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    progress: z.ZodNumber;
+    result: z.ZodOptional<z.ZodObject<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, z.ZodTypeAny, "passthrough">>>;
+    error: z.ZodOptional<z.ZodString>;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    progress: z.ZodNumber;
+    result: z.ZodOptional<z.ZodObject<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        draft: z.ZodOptional<z.ZodString>;
+        improved: z.ZodOptional<z.ZodString>;
+        metadata: z.ZodOptional<z.ZodObject<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+            title: z.ZodString;
+            tags: z.ZodArray<z.ZodString, "many">;
+            estimatedReadTime: z.ZodString;
+        }, z.ZodTypeAny, "passthrough">>>;
+        changes: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        analysis: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    }, z.ZodTypeAny, "passthrough">>>;
+    error: z.ZodOptional<z.ZodString>;
+}, z.ZodTypeAny, "passthrough">>;
+export declare const FinalizeOutputSchema: z.ZodObject<{
+    draft: z.ZodString;
+    metadata: z.ZodObject<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">>;
+    message: z.ZodString;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    draft: z.ZodString;
+    metadata: z.ZodObject<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">>;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    draft: z.ZodString;
+    metadata: z.ZodObject<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+        title: z.ZodString;
+        tags: z.ZodArray<z.ZodString, "many">;
+        estimatedReadTime: z.ZodString;
+    }, z.ZodTypeAny, "passthrough">>;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">>;
+export declare const SaveOutputSchema: z.ZodObject<{
+    filepath: z.ZodString;
+    message: z.ZodString;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    filepath: z.ZodString;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    filepath: z.ZodString;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">>;
+export declare const DeployOutputSchema: z.ZodObject<{
+    url: z.ZodString;
+    deployed: z.ZodBoolean;
+    message: z.ZodString;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    url: z.ZodString;
+    deployed: z.ZodBoolean;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    url: z.ZodString;
+    deployed: z.ZodBoolean;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">>;
+export declare const ReviewOutputSchema: z.ZodObject<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    model: z.ZodOptional<z.ZodString>;
+    message: z.ZodString;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    model: z.ZodOptional<z.ZodString>;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    model: z.ZodOptional<z.ZodString>;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">>;
+export declare const StartDraftProOutputSchema: z.ZodObject<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    message: z.ZodString;
+}, "passthrough", z.ZodTypeAny, z.objectOutputType<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">, z.objectInputType<{
+    task_id: z.ZodString;
+    status: z.ZodNativeEnum<typeof TaskStatus>;
+    message: z.ZodString;
+}, z.ZodTypeAny, "passthrough">>;
 export interface GeminiAnalysis {
     [key: string]: unknown;
     summary: string;

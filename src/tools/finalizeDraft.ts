@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { FinalizeDraftInputSchema, FinalizeDraftInput, TaskStatus, FinalizeOutput } from "../types.js";
+import { FinalizeDraftInputSchema, FinalizeDraftInput, TaskStatus, FinalizeOutput, FinalizeOutputSchema } from "../types.js";
 import { getTask } from "../services/database.js";
 
 export function registerFinalizeDraftTool(server: McpServer): void {
@@ -20,6 +20,7 @@ Returns:
   - metadata: { title, tags, estimatedReadTime }
   - message: 안내 메시지`,
       inputSchema: FinalizeDraftInputSchema,
+      outputSchema: FinalizeOutputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -64,7 +65,7 @@ Returns:
         const output: FinalizeOutput = {
           draft: task.result.draft,
           metadata: task.result.metadata || {
-            title: "Untitled",
+            title: "제목 없음",
             tags: [],
             estimatedReadTime: "5분"
           },

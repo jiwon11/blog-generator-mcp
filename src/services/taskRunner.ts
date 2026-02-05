@@ -192,7 +192,7 @@ async function generateReview(
   return reviewBlogDraft(draft, focus, model, instructions, customPrompt, apiKey);
 }
 
-// ============ Pro Mode Functions ============
+// ============ Pro Mode Functions (HTTP 모드 전용) ============
 
 /**
  * Pro Mode: Gemini(분석) → Claude(작성) 파이프라인

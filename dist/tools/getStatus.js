@@ -1,4 +1,4 @@
-import { GetStatusInputSchema } from "../types.js";
+import { GetStatusInputSchema, GetStatusOutputSchema } from "../types.js";
 import { getTask } from "../services/database.js";
 export function registerGetStatusTool(server) {
     server.registerTool("blog_get_status", {
@@ -15,6 +15,7 @@ Returns:
   - result: 완료 시 결과 (draft, metadata 등)
   - error: 실패 시 오류 메시지`,
         inputSchema: GetStatusInputSchema,
+        outputSchema: GetStatusOutputSchema,
         annotations: {
             readOnlyHint: true,
             destructiveHint: false,

@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { DeployGithubInputSchema, DeployGithubInput, DeployOutput, TaskStatus } from "../types.js";
+import { DeployGithubInputSchema, DeployGithubInput, DeployOutput, TaskStatus, DeployOutputSchema } from "../types.js";
 import { deployToGithub, readLocalFile } from "../services/github.js";
 import { getTask } from "../services/database.js";
 
@@ -28,6 +28,7 @@ Returns:
   - deployed: 배포 성공 여부
   - message: 안내 메시지`,
       inputSchema: DeployGithubInputSchema,
+      outputSchema: DeployOutputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,

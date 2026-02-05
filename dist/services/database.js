@@ -51,7 +51,7 @@ async function saveDatabase() {
 }
 export async function createTask(id, type, input) {
     if (!db)
-        throw new Error("Database not initialized");
+        throw new Error("데이터베이스가 초기화되지 않았습니다");
     const now = new Date().toISOString();
     const task = {
         id,
@@ -83,7 +83,7 @@ export async function createTask(id, type, input) {
 }
 export async function getTask(id) {
     if (!db)
-        throw new Error("Database not initialized");
+        throw new Error("데이터베이스가 초기화되지 않았습니다");
     const result = db.exec(`SELECT * FROM tasks WHERE id = ?`, [id]);
     if (result.length === 0 || result[0].values.length === 0) {
         return null;
@@ -109,7 +109,7 @@ export async function getTask(id) {
 }
 export async function updateTaskStatus(id, status, progress) {
     if (!db)
-        throw new Error("Database not initialized");
+        throw new Error("데이터베이스가 초기화되지 않았습니다");
     const now = new Date().toISOString();
     if (progress !== undefined) {
         db.run(`UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`, [status, progress, now, id]);
@@ -121,24 +121,24 @@ export async function updateTaskStatus(id, status, progress) {
 }
 export async function updateTaskResult(id, result) {
     if (!db)
-        throw new Error("Database not initialized");
+        throw new Error("데이터베이스가 초기화되지 않았습니다");
     const now = new Date().toISOString();
     db.run(`UPDATE tasks SET result = ?, status = ?, progress = 100, updated_at = ? WHERE id = ?`, [JSON.stringify(result), TaskStatus.COMPLETED, now, id]);
     await saveDatabase();
 }
 export async function updateTaskError(id, error) {
     if (!db)
-        throw new Error("Database not initialized");
+        throw new Error("데이터베이스가 초기화되지 않았습니다");
     const now = new Date().toISOString();
     db.run(`UPDATE tasks SET error = ?, status = ?, updated_at = ? WHERE id = ?`, [error, TaskStatus.FAILED, now, id]);
     await saveDatabase();
 }
 export async function addFeedbackToHistory(id, feedback) {
     if (!db)
-        throw new Error("Database not initialized");
+        throw new Error("데이터베이스가 초기화되지 않았습니다");
     const task = await getTask(id);
     if (!task)
-        throw new Error(`Task not found: ${id}`);
+        throw new Error(`작업을 찾을 수 없습니다: ${id}`);
     const entry = {
         feedback,
         appliedAt: new Date().toISOString()
@@ -150,7 +150,7 @@ export async function addFeedbackToHistory(id, feedback) {
 }
 export async function cleanupOldTasks(daysOld = 7) {
     if (!db)
-        throw new Error("Database not initialized");
+        throw new Error("데이터베이스가 초기화되지 않았습니다");
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - daysOld);
     const result = db.run(`DELETE FROM tasks WHERE created_at < ? AND status IN ('completed', 'failed')`, [cutoff.toISOString()]);
