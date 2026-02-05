@@ -1,0 +1,78 @@
+import { Octokit } from "@octokit/rest";
+import * as fs from "fs/promises";
+import * as path from "path";
+export async function deployToGithub(filepath, repo, branch, commitMessage, targetPath) {
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+        throw new Error("GITHUB_TOKEN 환경변수가 설정되지 않았습니다. " +
+            "GitHub Personal Access Token을 생성하고 설정해주세요. " +
+            "(필요 권한: repo, contents)");
+    }
+    const octokit = new Octokit({ auth: token });
+    // Parse owner and repo name
+    const [owner, repoName] = repo.split("/");
+    if (!owner || !repoName) {
+        throw new Error("저장소 형식이 올바르지 않습니다. 'owner/repo' 형식으로 입력해주세요.");
+    }
+    // Read file content
+    let content;
+    try {
+        content = await fs.readFile(filepath, "utf-8");
+    }
+    catch {
+        throw new Error(`파일을 읽을 수 없습니다: ${filepath}`);
+    }
+    // Determine target path in repo
+    const filename = path.basename(filepath);
+    const repoPath = targetPath || filename;
+    // Generate commit message if not provided
+    const message = commitMessage || `Add blog post: ${filename}`;
+    try {
+        // Check if file already exists
+        let sha;
+        try {
+            const { data: existingFile } = await octokit.repos.getContent({
+                owner,
+                repo: repoName,
+                path: repoPath,
+                ref: branch
+            });
+            if (!Array.isArray(existingFile) && existingFile.type === "file") {
+                sha = existingFile.sha;
+            }
+        }
+        catch {
+            // File doesn't exist, that's fine
+        }
+        // Create or update file
+        const { data } = await octokit.repos.createOrUpdateFileContents({
+            owner,
+            repo: repoName,
+            path: repoPath,
+            message,
+            content: Buffer.from(content).toString("base64"),
+            branch,
+            sha
+        });
+        return {
+            url: data.commit.html_url || `https://github.com/${repo}/commit/${data.commit.sha}`,
+            deployed: true
+        };
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            if (error.message.includes("Bad credentials")) {
+                throw new Error("GitHub 토큰이 유효하지 않습니다. 토큰을 확인해주세요.");
+            }
+            if (error.message.includes("Not Found")) {
+                throw new Error(`저장소를 찾을 수 없습니다: ${repo}. 저장소 이름과 권한을 확인해주세요.`);
+            }
+            if (error.message.includes("branch")) {
+                throw new Error(`브랜치를 찾을 수 없습니다: ${branch}`);
+            }
+            throw new Error(`GitHub API 오류: ${error.message}`);
+        }
+        throw new Error("알 수 없는 오류가 발생했습니다.");
+    }
+}
+//# sourceMappingURL=github.js.map
