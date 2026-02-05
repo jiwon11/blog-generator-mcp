@@ -1,6 +1,7 @@
-import { SaveBlogInputSchema } from "../types.js";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { SaveBlogInputSchema, TaskStatus } from "../types.js";
+import { getTask } from "../services/database.js";
 function generateFilename(content) {
     // Try to extract title from content
     const titleMatch = content.match(/^#\s+(.+)$/m);
@@ -20,22 +21,18 @@ export function registerSaveBlogTool(server) {
         title: "Save Blog Post",
         description: `블로그 글을 로컬 마크다운 파일로 저장합니다.
 
+기존 작업 ID를 사용하거나 직접 콘텐츠를 입력할 수 있습니다.
 파일명이 제공되지 않으면 글 제목과 날짜를 기반으로 자동 생성합니다.
-디렉토리가 없으면 자동으로 생성합니다.
 
 Args:
-  - content (string): 저장할 마크다운 콘텐츠
-  - filename (string, optional): 파일명 (없으면 자동 생성)
-  - directory (string): 저장 디렉토리 경로 (기본: ./posts)
+  - task_id: 저장할 작업 ID (선택)
+  - content: 직접 저장할 마크다운 콘텐츠 (선택)
+  - filename: 파일명 (선택, 없으면 자동 생성)
+  - directory: 저장 디렉토리 경로 (기본: ./posts)
 
 Returns:
-  {
-    "filepath": string    // 저장된 파일의 전체 경로
-  }
-
-Example:
-  content="# My Blog Post\\n...", directory="./posts"
-  -> filepath="./posts/2024-01-15-my-blog-post.md"`,
+  - filepath: 저장된 파일의 전체 경로
+  - message: 안내 메시지`,
         inputSchema: SaveBlogInputSchema,
         annotations: {
             readOnlyHint: false,
@@ -45,8 +42,54 @@ Example:
         }
     }, async (params) => {
         try {
+            let content;
+            // 콘텐츠 결정
+            if (params.task_id) {
+                const task = await getTask(params.task_id);
+                if (!task) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: `Error: 작업을 찾을 수 없습니다: ${params.task_id}`
+                            }],
+                        isError: true
+                    };
+                }
+                if (task.status !== TaskStatus.COMPLETED) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: `Error: 완료된 작업만 저장할 수 있습니다. 현재 상태: ${task.status}`
+                            }],
+                        isError: true
+                    };
+                }
+                const draft = task.result?.draft || task.result?.improved;
+                if (!draft) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: "Error: 저장할 콘텐츠를 찾을 수 없습니다."
+                            }],
+                        isError: true
+                    };
+                }
+                content = draft;
+            }
+            else if (params.content) {
+                content = params.content;
+            }
+            else {
+                return {
+                    content: [{
+                            type: "text",
+                            text: "Error: task_id 또는 content 중 하나는 필수입니다."
+                        }],
+                    isError: true
+                };
+            }
             const directory = params.directory || "./posts";
-            const filename = params.filename || generateFilename(params.content);
+            const filename = params.filename || generateFilename(content);
             // Ensure filename ends with .md
             const finalFilename = filename.endsWith(".md") ? filename : `${filename}.md`;
             // Create directory if it doesn't exist
@@ -54,12 +97,15 @@ Example:
             // Full file path
             const filepath = path.join(directory, finalFilename);
             // Write file
-            await fs.writeFile(filepath, params.content, "utf-8");
-            const output = { filepath };
+            await fs.writeFile(filepath, content, "utf-8");
+            const output = {
+                filepath,
+                message: `블로그 글이 저장되었습니다: ${filepath}`
+            };
             return {
                 content: [{
                         type: "text",
-                        text: `블로그 글이 저장되었습니다: ${filepath}`
+                        text: JSON.stringify(output, null, 2)
                     }],
                 structuredContent: output
             };
@@ -70,7 +116,7 @@ Example:
                 return {
                     content: [{
                             type: "text",
-                            text: `Error: 파일 저장 권한이 없습니다. 디렉토리 권한을 확인해주세요.`
+                            text: "Error: 파일 저장 권한이 없습니다. 디렉토리 권한을 확인해주세요."
                         }],
                     isError: true
                 };

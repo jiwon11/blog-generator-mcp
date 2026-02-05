@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { InputType, BlogStyle, Language } from "../types.js";
+import { InputType, BlogStyle, Language, ReviewFocus } from "../types.js";
 const GEMINI_MODEL = "gemini-1.5-flash";
-function getPromptTemplate(inputType, style, language, content) {
+function getPromptTemplate(inputType, style, language, content, customPrompt) {
     const languageInstruction = language === Language.KO
         ? "한국어로 작성해주세요."
         : "Write in English.";
@@ -45,13 +45,20 @@ ${content}`,
 Git 변경사항:
 ${content}`
     };
-    return `당신은 기술 블로그 작성 전문가입니다. ${languageInstruction}
+    let prompt = `당신은 기술 블로그 작성 전문가입니다. ${languageInstruction}
 
 ${inputInstructions[inputType]}
 
 글 스타일: ${style}
 스타일 가이드라인:
-${styleInstructions[style]}
+${styleInstructions[style]}`;
+    if (customPrompt) {
+        prompt += `
+
+사용자 추가 요청:
+${customPrompt}`;
+    }
+    prompt += `
 
 출력 형식:
 1. 마크다운 형식으로 작성
@@ -68,9 +75,9 @@ ${styleInstructions[style]}
   "estimatedReadTime": "X분"
 }
 \`\`\``;
+    return prompt;
 }
 function parseResponse(response) {
-    // Extract metadata JSON from the response
     const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```\s*$/);
     let metadata = {
         title: "Untitled",
@@ -81,14 +88,12 @@ function parseResponse(response) {
     if (jsonMatch) {
         try {
             metadata = JSON.parse(jsonMatch[1]);
-            // Remove the JSON block from the draft
             draft = response.replace(/```json\s*[\s\S]*?\s*```\s*$/, "").trim();
         }
         catch {
             // Keep default metadata if parsing fails
         }
     }
-    // Try to extract title from the first H1 if not in metadata
     if (metadata.title === "Untitled") {
         const titleMatch = draft.match(/^#\s+(.+)$/m);
         if (titleMatch) {
@@ -97,15 +102,28 @@ function parseResponse(response) {
     }
     return { draft, metadata };
 }
-export async function generateBlogDraft(inputType, content, style, language) {
-    const apiKey = process.env.GEMINI_API_KEY;
+function parseFeedbackResponse(response) {
+    const { draft, metadata } = parseResponse(response);
+    // Extract changes
+    const changesMatch = response.match(/---CHANGES---\s*([\s\S]*?)\s*---END---/);
+    let changes = [];
+    if (changesMatch) {
+        changes = changesMatch[1]
+            .split("\n")
+            .map(line => line.trim())
+            .filter(line => line.startsWith("-"))
+            .map(line => line.substring(1).trim());
+    }
+    return { draft, metadata, changes };
+}
+export async function generateBlogDraft(inputType, content, style, language, customPrompt, apiKey) {
     if (!apiKey) {
-        throw new Error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다. " +
-            "Google AI Studio(https://aistudio.google.com/app/apikey)에서 API 키를 발급받아 설정해주세요.");
+        throw new Error("Gemini API 키가 필요합니다. " +
+            "Google AI Studio(https://aistudio.google.com/app/apikey)에서 발급받아주세요.");
     }
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-    const prompt = getPromptTemplate(inputType, style, language, content);
+    const prompt = getPromptTemplate(inputType, style, language, content, customPrompt);
     try {
         const result = await model.generateContent(prompt);
         const response = result.response.text();
@@ -114,12 +132,138 @@ export async function generateBlogDraft(inputType, content, style, language) {
     catch (error) {
         if (error instanceof Error) {
             if (error.message.includes("API_KEY")) {
-                throw new Error("잘못된 GEMINI_API_KEY입니다. API 키를 확인해주세요.");
+                throw new Error("잘못된 Gemini API 키입니다. API 키를 확인해주세요.");
             }
             if (error.message.includes("quota")) {
                 throw new Error("Gemini API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요.");
             }
             throw new Error(`Gemini API 오류: ${error.message}`);
+        }
+        throw new Error("알 수 없는 오류가 발생했습니다.");
+    }
+}
+export async function applyFeedbackToDraft(originalDraft, feedback, type, apiKey) {
+    if (!apiKey) {
+        throw new Error("Gemini API 키가 필요합니다.");
+    }
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    const prompt = `당신은 기술 블로그 편집자입니다.
+
+아래 블로그 ${type === "review" ? "검수 결과" : "초안"}에 사용자 피드백을 반영해주세요.
+
+원본:
+${originalDraft}
+
+사용자 피드백:
+${feedback}
+
+요청사항:
+1. 피드백을 최대한 반영하여 글을 수정해주세요
+2. 기존 글의 톤과 스타일을 유지해주세요
+3. 마크다운 형식을 유지해주세요
+
+수정된 글 전체를 출력하고, 마지막에 변경 사항을 정리해주세요:
+
+---CHANGES---
+- 변경사항 1
+- 변경사항 2
+---END---
+
+그리고 메타데이터도 업데이트해주세요:
+\`\`\`json
+{
+  "title": "글 제목",
+  "tags": ["태그1", "태그2"],
+  "estimatedReadTime": "X분"
+}
+\`\`\``;
+    try {
+        const result = await model.generateContent(prompt);
+        const response = result.response.text();
+        return parseFeedbackResponse(response);
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            throw new Error(`피드백 반영 오류: ${error.message}`);
+        }
+        throw new Error("알 수 없는 오류가 발생했습니다.");
+    }
+}
+export async function reviewBlogDraft(draft, focus, customPrompt, apiKey) {
+    if (!apiKey) {
+        throw new Error("Gemini API 키가 필요합니다.");
+    }
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    const focusInstructions = {
+        [ReviewFocus.ACCURACY]: `
+기술적 정확성에 집중하여 검토해주세요:
+- 기술적 오류나 잘못된 설명 수정
+- 코드 예제의 정확성 확인
+- 최신 버전/방식 반영
+- 잘못된 용어 수정`,
+        [ReviewFocus.READABILITY]: `
+가독성에 집중하여 검토해주세요:
+- 문장 구조 개선
+- 단락 구분 최적화
+- 복잡한 설명 단순화
+- 흐름과 연결성 개선`,
+        [ReviewFocus.SEO]: `
+SEO 최적화에 집중하여 검토해주세요:
+- 제목과 부제목 최적화
+- 키워드 자연스럽게 포함
+- 메타 설명용 요약 추가
+- 내부 링크 제안`,
+        [ReviewFocus.ALL]: `
+전체적으로 검토해주세요:
+- 기술적 정확성
+- 가독성과 흐름
+- SEO 최적화
+- 문법 및 오타 수정`
+    };
+    let prompt = `당신은 기술 블로그 편집자입니다. 아래 블로그 글을 검토하고 개선해주세요.
+
+${focusInstructions[focus]}`;
+    if (customPrompt) {
+        prompt += `
+
+추가 검수 요청:
+${customPrompt}`;
+    }
+    prompt += `
+
+원본 글:
+${draft}
+
+응답 형식:
+1. 먼저 개선된 전체 글을 마크다운 형식으로 제공
+2. 마지막에 변경 사항 목록을 제공:
+
+---CHANGES---
+- 변경사항 1
+- 변경사항 2
+---END---`;
+    try {
+        const result = await model.generateContent(prompt);
+        const response = result.response.text();
+        // Parse response
+        const changesMatch = response.match(/---CHANGES---\s*([\s\S]*?)\s*---END---/);
+        let changes = [];
+        let improved = response;
+        if (changesMatch) {
+            changes = changesMatch[1]
+                .split("\n")
+                .map(line => line.trim())
+                .filter(line => line.startsWith("-"))
+                .map(line => line.substring(1).trim());
+            improved = response.replace(/---CHANGES---[\s\S]*?---END---/, "").trim();
+        }
+        return { improved, changes };
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            throw new Error(`검수 오류: ${error.message}`);
         }
         throw new Error("알 수 없는 오류가 발생했습니다.");
     }

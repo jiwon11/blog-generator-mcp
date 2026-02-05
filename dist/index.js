@@ -1,44 +1,62 @@
 #!/usr/bin/env node
 /**
- * Blog Generator MCP Server
+ * Blog Generator MCP Server v2
  *
  * Gemini AI를 사용하여 블로그 초안을 생성하고,
  * Claude가 검수하여 품질 높은 기술 블로그 글을 자동 생성하는 MCP 서버입니다.
+ *
+ * Features:
+ * - 다중 플랫폼 지원 (stdio, HTTP)
+ * - 다중 사용자 지원 (API 키 파라미터 전달)
+ * - 인터랙티브 워크플로우 (단계별 도구)
+ * - 백그라운드 실행 + 알림
  */
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { registerGenerateDraftTool } from "./tools/generateDraft.js";
-import { registerReviewPostTool } from "./tools/reviewPost.js";
-import { registerSaveBlogTool } from "./tools/saveBlog.js";
-import { registerDeployGithubTool } from "./tools/deployGithub.js";
-// Create MCP server instance
-const server = new McpServer({
-    name: "blog-generator-mcp",
-    version: "1.0.0"
-});
-// Register all tools
-registerGenerateDraftTool(server);
-registerReviewPostTool(server);
-registerSaveBlogTool(server);
-registerDeployGithubTool(server);
-// Main function
+import { Command } from "commander";
+import { createServer } from "./server.js";
+import { initDatabase, closeDatabase } from "./services/database.js";
+import { runStdioTransport } from "./transports/stdio.js";
+import { runHttpTransport } from "./transports/http.js";
+const program = new Command();
+program
+    .name("blog-generator-mcp")
+    .description("MCP server for automatic blog post generation using Gemini and Claude")
+    .version("2.0.0")
+    .option("--stdio", "Run in stdio mode (default)")
+    .option("--http", "Run in HTTP server mode")
+    .option("--port <number>", "HTTP server port", "3000")
+    .option("--db <path>", "SQLite database path", "./data/tasks.db")
+    .parse(process.argv);
+const options = program.opts();
 async function main() {
-    // Validate environment variables
-    if (!process.env.GEMINI_API_KEY) {
-        console.error("WARNING: GEMINI_API_KEY 환경변수가 설정되지 않았습니다.\n" +
-            "blog_generate_draft 도구를 사용하려면 API 키가 필요합니다.\n" +
-            "https://aistudio.google.com/app/apikey 에서 발급받을 수 있습니다.");
+    try {
+        // Initialize database
+        await initDatabase(options.db);
+        console.error(`Database initialized: ${options.db}`);
+        // Create MCP server
+        const server = createServer();
+        // Handle shutdown
+        const shutdown = () => {
+            console.error("\nShutting down...");
+            closeDatabase();
+            process.exit(0);
+        };
+        process.on("SIGINT", shutdown);
+        process.on("SIGTERM", shutdown);
+        // Run appropriate transport
+        if (options.http) {
+            const port = parseInt(options.port, 10);
+            await runHttpTransport(server, port);
+        }
+        else {
+            // Default to stdio
+            await runStdioTransport(server);
+        }
     }
-    if (!process.env.GITHUB_TOKEN) {
-        console.error("WARNING: GITHUB_TOKEN 환경변수가 설정되지 않았습니다.\n" +
-            "blog_deploy_github 도구를 사용하려면 토큰이 필요합니다.");
+    catch (error) {
+        console.error("Server error:", error);
+        closeDatabase();
+        process.exit(1);
     }
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("Blog Generator MCP Server is running");
 }
-main().catch((error) => {
-    console.error("Server error:", error);
-    process.exit(1);
-});
+main();
 //# sourceMappingURL=index.js.map

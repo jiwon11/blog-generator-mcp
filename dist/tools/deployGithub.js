@@ -1,31 +1,28 @@
-import { DeployGithubInputSchema } from "../types.js";
-import { deployToGithub } from "../services/github.js";
+import { DeployGithubInputSchema, TaskStatus } from "../types.js";
+import { deployToGithub, readLocalFile } from "../services/github.js";
+import { getTask } from "../services/database.js";
 export function registerDeployGithubTool(server) {
     server.registerTool("blog_deploy_github", {
         title: "Deploy to GitHub",
         description: `블로그 글을 GitHub 저장소에 배포합니다.
 
+기존 작업 ID, 직접 콘텐츠 입력, 또는 로컬 파일 경로를 사용할 수 있습니다.
 Jekyll, Hugo 등의 정적 사이트 생성기를 사용하는 블로그에 직접 커밋합니다.
-파일이 이미 존재하면 업데이트합니다.
 
 Args:
-  - filepath (string): 배포할 파일의 로컬 경로
-  - repo (string): GitHub 저장소 (owner/repo 형식)
-  - branch (string): 배포할 브랜치 (기본: main)
-  - commit_message (string, optional): 커밋 메시지
-  - target_path (string, optional): 저장소 내 저장 경로
+  - task_id: 배포할 작업 ID (선택)
+  - content: 직접 배포할 마크다운 콘텐츠 (선택)
+  - filepath: 배포할 로컬 파일 경로 (선택)
+  - repo: GitHub 저장소 (owner/repo 형식, 필수)
+  - branch: 배포할 브랜치 (기본: main)
+  - target_path: 저장소 내 저장 경로 (필수)
+  - commit_message: 커밋 메시지 (선택)
+  - github_token: GitHub Personal Access Token (필수)
 
 Returns:
-  {
-    "url": string,        // 커밋 URL
-    "deployed": boolean   // 배포 성공 여부
-  }
-
-Requirements:
-  - GITHUB_TOKEN 환경변수 필요 (repo 권한)
-
-Example:
-  filepath="./posts/my-post.md", repo="user/blog", target_path="_posts/my-post.md"`,
+  - url: 커밋 URL
+  - deployed: 배포 성공 여부
+  - message: 안내 메시지`,
         inputSchema: DeployGithubInputSchema,
         annotations: {
             readOnlyHint: false,
@@ -35,13 +32,67 @@ Example:
         }
     }, async (params) => {
         try {
-            const result = await deployToGithub(params.filepath, params.repo, params.branch || "main", params.commit_message, params.target_path);
+            let content;
+            // 콘텐츠 결정
+            if (params.task_id) {
+                const task = await getTask(params.task_id);
+                if (!task) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: `Error: 작업을 찾을 수 없습니다: ${params.task_id}`
+                            }],
+                        isError: true
+                    };
+                }
+                if (task.status !== TaskStatus.COMPLETED) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: `Error: 완료된 작업만 배포할 수 있습니다. 현재 상태: ${task.status}`
+                            }],
+                        isError: true
+                    };
+                }
+                const draft = task.result?.draft || task.result?.improved;
+                if (!draft) {
+                    return {
+                        content: [{
+                                type: "text",
+                                text: "Error: 배포할 콘텐츠를 찾을 수 없습니다."
+                            }],
+                        isError: true
+                    };
+                }
+                content = draft;
+            }
+            else if (params.content) {
+                content = params.content;
+            }
+            else if (params.filepath) {
+                content = await readLocalFile(params.filepath);
+            }
+            else {
+                return {
+                    content: [{
+                            type: "text",
+                            text: "Error: task_id, content, filepath 중 하나는 필수입니다."
+                        }],
+                    isError: true
+                };
+            }
+            const result = await deployToGithub(content, params.repo, params.branch, params.target_path, params.commit_message, params.github_token);
+            const output = {
+                url: result.url,
+                deployed: result.deployed,
+                message: `GitHub 배포 완료! 커밋 URL: ${result.url}`
+            };
             return {
                 content: [{
                         type: "text",
-                        text: `GitHub 배포 완료!\n\n커밋 URL: ${result.url}`
+                        text: JSON.stringify(output, null, 2)
                     }],
-                structuredContent: result
+                structuredContent: output
             };
         }
         catch (error) {

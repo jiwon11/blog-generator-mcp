@@ -9,18 +9,17 @@ export interface DeployResult {
 }
 
 export async function deployToGithub(
-  filepath: string,
+  content: string,
   repo: string,
   branch: string,
-  commitMessage?: string,
-  targetPath?: string
+  targetPath: string,
+  commitMessage: string | undefined,
+  token: string
 ): Promise<DeployResult> {
-  const token = process.env.GITHUB_TOKEN;
-
   if (!token) {
     throw new Error(
-      "GITHUB_TOKEN 환경변수가 설정되지 않았습니다. " +
-      "GitHub Personal Access Token을 생성하고 설정해주세요. " +
+      "GitHub 토큰이 필요합니다. " +
+      "GitHub Personal Access Token을 생성해주세요. " +
       "(필요 권한: repo, contents)"
     );
   }
@@ -33,20 +32,8 @@ export async function deployToGithub(
     throw new Error("저장소 형식이 올바르지 않습니다. 'owner/repo' 형식으로 입력해주세요.");
   }
 
-  // Read file content
-  let content: string;
-  try {
-    content = await fs.readFile(filepath, "utf-8");
-  } catch {
-    throw new Error(`파일을 읽을 수 없습니다: ${filepath}`);
-  }
-
-  // Determine target path in repo
-  const filename = path.basename(filepath);
-  const repoPath = targetPath || filename;
-
   // Generate commit message if not provided
-  const message = commitMessage || `Add blog post: ${filename}`;
+  const message = commitMessage || `Add blog post: ${path.basename(targetPath)}`;
 
   try {
     // Check if file already exists
@@ -55,7 +42,7 @@ export async function deployToGithub(
       const { data: existingFile } = await octokit.repos.getContent({
         owner,
         repo: repoName,
-        path: repoPath,
+        path: targetPath,
         ref: branch
       });
 
@@ -70,7 +57,7 @@ export async function deployToGithub(
     const { data } = await octokit.repos.createOrUpdateFileContents({
       owner,
       repo: repoName,
-      path: repoPath,
+      path: targetPath,
       message,
       content: Buffer.from(content).toString("base64"),
       branch,
@@ -95,5 +82,13 @@ export async function deployToGithub(
       throw new Error(`GitHub API 오류: ${error.message}`);
     }
     throw new Error("알 수 없는 오류가 발생했습니다.");
+  }
+}
+
+export async function readLocalFile(filepath: string): Promise<string> {
+  try {
+    return await fs.readFile(filepath, "utf-8");
+  } catch {
+    throw new Error(`파일을 읽을 수 없습니다: ${filepath}`);
   }
 }

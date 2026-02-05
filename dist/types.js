@@ -26,55 +26,144 @@ export var ReviewFocus;
     ReviewFocus["SEO"] = "seo";
     ReviewFocus["ALL"] = "all";
 })(ReviewFocus || (ReviewFocus = {}));
-// Zod Schemas
-export const GenerateDraftInputSchema = z.object({
+export var TaskStatus;
+(function (TaskStatus) {
+    TaskStatus["PENDING"] = "pending";
+    TaskStatus["IN_PROGRESS"] = "in_progress";
+    TaskStatus["COMPLETED"] = "completed";
+    TaskStatus["FAILED"] = "failed";
+})(TaskStatus || (TaskStatus = {}));
+export var TaskType;
+(function (TaskType) {
+    TaskType["DRAFT"] = "draft";
+    TaskType["REVIEW"] = "review";
+})(TaskType || (TaskType = {}));
+// ============ Zod Schemas ============
+// 공통 API 키 스키마
+const ApiKeySchema = z.object({
+    gemini_api_key: z.string()
+        .min(1, "Gemini API 키는 필수입니다")
+        .describe("Gemini API 키 (Google AI Studio에서 발급)")
+});
+const GithubTokenSchema = z.object({
+    github_token: z.string()
+        .min(1, "GitHub 토큰은 필수입니다")
+        .describe("GitHub Personal Access Token")
+});
+// 1. blog_start_draft
+export const StartDraftInputSchema = z.object({
     input_type: z.nativeEnum(InputType)
-        .describe("입력 유형: keyword(키워드), code(코드), memo(메모), git_push(git 변경사항)"),
+        .describe("입력 유형: keyword, code, memo, git_push"),
     content: z.string()
         .min(1, "콘텐츠는 필수입니다")
         .max(50000, "콘텐츠가 너무 깁니다")
         .describe("블로그 글 생성에 사용할 입력 내용"),
     style: z.nativeEnum(BlogStyle)
         .default(BlogStyle.TUTORIAL)
-        .describe("블로그 글 스타일: tutorial, til, deep-dive, troubleshooting"),
+        .describe("블로그 글 스타일"),
     language: z.nativeEnum(Language)
         .default(Language.KO)
-        .describe("출력 언어: ko(한국어), en(영어)")
+        .describe("출력 언어"),
+    custom_prompt: z.string()
+        .optional()
+        .describe("사용자 추가 요청 사항"),
+    gemini_api_key: z.string()
+        .min(1, "Gemini API 키는 필수입니다")
+        .describe("Gemini API 키")
 }).strict();
-export const ReviewPostInputSchema = z.object({
+// 2. blog_get_status
+export const GetStatusInputSchema = z.object({
+    task_id: z.string()
+        .min(1, "작업 ID는 필수입니다")
+        .describe("조회할 작업 ID")
+}).strict();
+// 3. blog_apply_feedback
+export const ApplyFeedbackInputSchema = z.object({
+    task_id: z.string()
+        .min(1, "작업 ID는 필수입니다")
+        .describe("피드백을 적용할 작업 ID"),
+    feedback: z.string()
+        .min(1, "피드백 내용은 필수입니다")
+        .describe("수정 요청 사항"),
+    gemini_api_key: z.string()
+        .min(1, "Gemini API 키는 필수입니다")
+        .describe("Gemini API 키")
+}).strict();
+// 4. blog_finalize_draft
+export const FinalizeDraftInputSchema = z.object({
+    task_id: z.string()
+        .min(1, "작업 ID는 필수입니다")
+        .describe("확정할 작업 ID")
+}).strict();
+// 5. blog_start_review
+export const StartReviewInputSchema = z.object({
+    task_id: z.string()
+        .optional()
+        .describe("기존 작업 ID (draft 결과 사용 시)"),
     draft: z.string()
-        .min(1, "초안은 필수입니다")
-        .describe("검수할 블로그 초안 (마크다운 형식)"),
+        .optional()
+        .describe("직접 입력할 초안 내용"),
     focus: z.nativeEnum(ReviewFocus)
         .default(ReviewFocus.ALL)
-        .describe("검수 초점: accuracy(정확성), readability(가독성), seo(SEO), all(전체)")
+        .describe("검수 초점: accuracy, readability, seo, all"),
+    custom_prompt: z.string()
+        .optional()
+        .describe("추가 검수 요청 사항"),
+    gemini_api_key: z.string()
+        .min(1, "Gemini API 키는 필수입니다")
+        .describe("Gemini API 키")
+}).strict().refine((data) => data.task_id || data.draft, { message: "task_id 또는 draft 중 하나는 필수입니다" });
+// 6. blog_apply_review_feedback
+export const ApplyReviewFeedbackInputSchema = z.object({
+    task_id: z.string()
+        .min(1, "작업 ID는 필수입니다")
+        .describe("피드백을 적용할 검수 작업 ID"),
+    feedback: z.string()
+        .min(1, "피드백 내용은 필수입니다")
+        .describe("추가 검수 요청 사항"),
+    gemini_api_key: z.string()
+        .min(1, "Gemini API 키는 필수입니다")
+        .describe("Gemini API 키")
 }).strict();
+// 7. blog_save
 export const SaveBlogInputSchema = z.object({
+    task_id: z.string()
+        .optional()
+        .describe("저장할 작업 ID"),
     content: z.string()
-        .min(1, "콘텐츠는 필수입니다")
-        .describe("저장할 마크다운 콘텐츠"),
+        .optional()
+        .describe("직접 저장할 마크다운 콘텐츠"),
     filename: z.string()
         .optional()
-        .describe("파일명 (없으면 제목에서 자동 생성)"),
+        .describe("파일명 (없으면 자동 생성)"),
     directory: z.string()
         .default("./posts")
         .describe("저장 디렉토리 경로")
-}).strict();
+}).strict().refine((data) => data.task_id || data.content, { message: "task_id 또는 content 중 하나는 필수입니다" });
+// 8. blog_deploy_github
 export const DeployGithubInputSchema = z.object({
+    task_id: z.string()
+        .optional()
+        .describe("배포할 작업 ID"),
+    content: z.string()
+        .optional()
+        .describe("직접 배포할 마크다운 콘텐츠"),
     filepath: z.string()
-        .min(1, "파일 경로는 필수입니다")
-        .describe("배포할 파일의 로컬 경로"),
+        .optional()
+        .describe("배포할 로컬 파일 경로"),
     repo: z.string()
         .regex(/^[^/]+\/[^/]+$/, "형식: owner/repo")
         .describe("GitHub 저장소 (owner/repo 형식)"),
     branch: z.string()
         .default("main")
         .describe("배포할 브랜치"),
+    target_path: z.string()
+        .describe("저장소 내 저장 경로"),
     commit_message: z.string()
         .optional()
         .describe("커밋 메시지 (없으면 자동 생성)"),
-    target_path: z.string()
-        .optional()
-        .describe("저장소 내 저장 경로 (없으면 파일명 그대로)")
-}).strict();
+    github_token: z.string()
+        .min(1, "GitHub 토큰은 필수입니다")
+        .describe("GitHub Personal Access Token")
+}).strict().refine((data) => data.task_id || data.content || data.filepath, { message: "task_id, content, filepath 중 하나는 필수입니다" });
 //# sourceMappingURL=types.js.map
