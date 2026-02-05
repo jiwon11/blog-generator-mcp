@@ -17,18 +17,6 @@ npx blog-generator-mcp
 - **Gemini API 키**: [Google AI Studio](https://aistudio.google.com/app/apikey)에서 발급
 - **Anthropic API 키** (Pro Mode용): [Anthropic Console](https://console.anthropic.com/)에서 발급
 
-### 환경변수 설정 (선택)
-
-API 키를 매번 입력하지 않으려면 환경변수로 설정하세요:
-
-```bash
-export GEMINI_API_KEY="your-gemini-key"
-export ANTHROPIC_API_KEY="your-anthropic-key"
-export BLOG_SAVE_DIRECTORY="./my-posts"  # 기본 저장 경로
-```
-
-환경변수가 설정되면 파라미터 없이도 도구를 사용할 수 있습니다.
-
 ### 3. Claude Desktop 설정
 
 `~/.config/claude/claude_desktop_config.json`:
@@ -38,11 +26,23 @@ export BLOG_SAVE_DIRECTORY="./my-posts"  # 기본 저장 경로
   "mcpServers": {
     "blog-generator": {
       "command": "npx",
-      "args": ["-y", "blog-generator-mcp"]
+      "args": ["-y", "blog-generator-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "your-gemini-api-key",
+        "ANTHROPIC_API_KEY": "your-anthropic-api-key",
+        "BLOG_SAVE_DIRECTORY": "./posts"
+      }
     }
   }
 }
 ```
+
+**환경변수 설명:**
+| 환경변수 | 필수 | 설명 |
+|---------|------|------|
+| `GEMINI_API_KEY` | O | Gemini API 키 |
+| `ANTHROPIC_API_KEY` | Pro Mode만 | Anthropic API 키 |
+| `BLOG_SAVE_DIRECTORY` | X | 블로그 저장 경로 (기본: ./posts) |
 
 Claude Desktop을 재시작하면 사용 준비 완료!
 
