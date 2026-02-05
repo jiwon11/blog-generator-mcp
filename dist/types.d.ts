@@ -241,7 +241,6 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     language: z.ZodDefault<z.ZodNativeEnum<typeof Language>>;
     instructions: z.ZodOptional<z.ZodString>;
     instructions_file: z.ZodOptional<z.ZodString>;
-    gemini_api_key: z.ZodOptional<z.ZodString>;
     anthropic_api_key: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     style: BlogStyle;
@@ -249,7 +248,6 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     code_diff: string;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
-    gemini_api_key?: string | undefined;
     dev_log?: string | undefined;
     request?: string | undefined;
     anthropic_api_key?: string | undefined;
@@ -259,7 +257,6 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     language?: Language | undefined;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
-    gemini_api_key?: string | undefined;
     dev_log?: string | undefined;
     request?: string | undefined;
     anthropic_api_key?: string | undefined;
@@ -714,7 +711,7 @@ export declare const StartDraftProOutputSchema: z.ZodObject<{
     status: z.ZodNativeEnum<typeof TaskStatus>;
     message: z.ZodString;
 }, z.ZodTypeAny, "passthrough">>;
-export interface GeminiAnalysis {
+export interface CodeAnalysis {
     [key: string]: unknown;
     summary: string;
     problem: string;

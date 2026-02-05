@@ -2,12 +2,12 @@ import { v4 as uuidv4 } from "uuid";
 import { StartDraftProInputSchema, TaskType, TaskStatus, StartDraftProOutputSchema } from "../types.js";
 import { createTask } from "../services/database.js";
 import { runProDraftGeneration } from "../services/taskRunner.js";
-import { getGeminiApiKey, getAnthropicApiKey } from "../services/env.js";
+import { getAnthropicApiKey } from "../services/env.js";
 import { mergeInstructions } from "../services/instructions.js";
 export function registerStartDraftProTool(server) {
     server.registerTool("blog_start_draft_pro", {
         title: "Start Pro Blog Draft Generation",
-        description: `[HTTP 모드 전용] Gemini(분석) + Claude(작성) 파이프라인으로 고품질 블로그 생성을 시작합니다.
+        description: `[HTTP 모드 전용] Claude Opus(분석 + 작성) 파이프라인으로 고품질 블로그 생성을 시작합니다.
 
 ⚠️ Claude Desktop/Code 사용자:
 이 도구는 HTTP 모드에서만 필요합니다.
@@ -15,8 +15,8 @@ Claude Desktop/Code 환경에서는 Claude에게 직접 "이 코드로 블로그
 Claude가 직접 코드를 분석하고 블로그를 작성합니다.
 
 ## 작동 방식 (HTTP 모드)
-1. Gemini Pro가 코드를 분석하여 인사이트 추출
-2. Claude가 분석 결과를 바탕으로 블로그 작성
+1. Claude Opus가 코드를 분석하여 인사이트 추출
+2. Claude Opus가 분석 결과를 바탕으로 블로그 작성
 3. blog_get_status로 완료 확인
 
 Args:
@@ -27,7 +27,6 @@ Args:
   - language: 언어 (기본: ko)
   - instructions: 상세 작성 지침 (선택)
   - instructions_file: 상세 작성 지침 마크다운 파일 경로 (선택, instructions와 병합 가능)
-  - gemini_api_key: Gemini API 키 (환경변수로 대체 가능)
   - anthropic_api_key: Anthropic API 키 (환경변수로 대체 가능)
 
 Returns:
@@ -43,7 +42,6 @@ Returns:
         }
     }, async (params) => {
         try {
-            const geminiApiKey = getGeminiApiKey(params.gemini_api_key);
             const anthropicApiKey = getAnthropicApiKey(params.anthropic_api_key);
             const taskId = uuidv4();
             // instructions 병합 (파일 + 파라미터)
@@ -58,7 +56,7 @@ Returns:
                 instructions: mergedInstructions
             });
             // 백그라운드에서 생성 시작
-            runProDraftGeneration(taskId, params.code_diff, params.dev_log, params.request, params.style, params.language, mergedInstructions, geminiApiKey, anthropicApiKey).catch(err => console.error("Pro draft generation error:", err));
+            runProDraftGeneration(taskId, params.code_diff, params.dev_log, params.request, params.style, params.language, mergedInstructions, anthropicApiKey).catch(err => console.error("Pro draft generation error:", err));
             const output = {
                 task_id: taskId,
                 status: TaskStatus.PENDING,
@@ -67,7 +65,7 @@ Returns:
             return {
                 content: [{
                         type: "text",
-                        text: `Pro Mode 블로그 생성 시작됨\n\nTask ID: ${taskId}\n\n⏳ Gemini가 코드를 분석 중입니다...\nblog_get_status로 진행 상황을 확인하세요.`
+                        text: `Pro Mode 블로그 생성 시작됨\n\nTask ID: ${taskId}\n\n⏳ Claude Opus가 코드를 분석 중입니다...\nblog_get_status로 진행 상황을 확인하세요.`
                     }],
                 structuredContent: output
             };

@@ -5,9 +5,9 @@ export declare function runDraftGeneration(taskId: string, inputType: InputType,
 export declare function runFeedbackApplication(taskId: string, feedback: string, model: GeminiModel, apiKey: string): Promise<void>;
 export declare function runReviewGeneration(taskId: string, draft: string, focus: ReviewFocus, model: GeminiModel, instructions: string | undefined, customPrompt: string | undefined, apiKey: string): Promise<void>;
 /**
- * Pro Mode: Gemini(분석) → Claude(작성) 파이프라인
+ * Pro Mode: Claude Opus(분석) → Claude Opus(작성) 파이프라인
  */
-export declare function runProDraftGeneration(taskId: string, codeDiff: string, devLog: string | undefined, request: string | undefined, style: BlogStyle, language: Language, instructions: string | undefined, geminiApiKey: string, anthropicApiKey: string): Promise<void>;
+export declare function runProDraftGeneration(taskId: string, codeDiff: string, devLog: string | undefined, request: string | undefined, style: BlogStyle, language: Language, instructions: string | undefined, anthropicApiKey: string): Promise<void>;
 /**
  * Pro Mode: Claude로 피드백 반영
  */

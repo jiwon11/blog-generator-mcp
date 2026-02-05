@@ -4,8 +4,8 @@ import {
   updateTaskResult,
   updateTaskError
 } from "./database.js";
-import { generateBlogDraft, applyFeedbackToDraft, analyzeCodeWithGemini } from "./gemini.js";
-import { writeBlogWithClaude, applyFeedbackWithClaude } from "./anthropic.js";
+import { generateBlogDraft, applyFeedbackToDraft } from "./gemini.js";
+import { writeBlogWithClaude, applyFeedbackWithClaude, analyzeCodeWithClaude } from "./anthropic.js";
 import { TaskStatus, TaskType, TaskResult, InputType, BlogStyle, Language, ReviewFocus, GeminiModel } from "../types.js";
 
 // 알림 콜백 (외부에서 설정 가능)
@@ -195,7 +195,7 @@ async function generateReview(
 // ============ Pro Mode Functions (HTTP 모드 전용) ============
 
 /**
- * Pro Mode: Gemini(분석) → Claude(작성) 파이프라인
+ * Pro Mode: Claude Opus(분석) → Claude Opus(작성) 파이프라인
  */
 export async function runProDraftGeneration(
   taskId: string,
@@ -205,19 +205,18 @@ export async function runProDraftGeneration(
   style: BlogStyle,
   language: Language,
   instructions: string | undefined,
-  geminiApiKey: string,
   anthropicApiKey: string
 ): Promise<void> {
   try {
-    // 1단계: Gemini로 코드 분석 (Researcher)
+    // 1단계: Claude로 코드 분석 (Researcher)
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
-    sendNotification(taskId, TaskStatus.IN_PROGRESS, "Pro Mode: Gemini가 코드를 분석 중입니다...");
+    sendNotification(taskId, TaskStatus.IN_PROGRESS, "Pro Mode: Claude Opus가 코드를 분석 중입니다...");
 
-    const analysis = await analyzeCodeWithGemini(
+    const analysis = await analyzeCodeWithClaude(
       codeDiff,
       devLog,
       request,
-      geminiApiKey
+      anthropicApiKey
     );
 
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 40);

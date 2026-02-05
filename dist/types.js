@@ -212,9 +212,6 @@ export const StartDraftProInputSchema = z.object({
     instructions_file: z.string()
         .optional()
         .describe("상세 작성 지침이 담긴 마크다운 파일 경로. instructions와 함께 사용하면 파일 내용 + 파라미터 내용이 병합됨"),
-    gemini_api_key: z.string()
-        .optional()
-        .describe("Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)"),
     anthropic_api_key: z.string()
         .optional()
         .describe("Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)")

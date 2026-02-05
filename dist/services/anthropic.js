@@ -4,6 +4,7 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { BlogStyle, Language } from "../types.js";
+const CLAUDE_MODEL = "claude-opus-4-6";
 /**
  * Claude로 블로그 글 작성
  */
@@ -12,7 +13,7 @@ export async function writeBlogWithClaude(analysis, codeDiff, style, language, i
     const styleGuide = getStyleGuide(style);
     const langGuide = language === Language.KO ? "한국어로 작성하세요." : "Write in English.";
     const systemPrompt = `당신은 뛰어난 기술 블로그 작가입니다.
-Gemini가 분석한 코드 인사이트를 바탕으로 매력적인 기술 블로그 글을 작성합니다.
+코드 분석 인사이트를 바탕으로 매력적인 기술 블로그 글을 작성합니다.
 
 ${styleGuide}
 ${langGuide}
@@ -26,7 +27,7 @@ tags: [태그1, 태그2, 태그3]
 ---
 
 [본문 내용...]`;
-    const userPrompt = `## Gemini 분석 결과
+    const userPrompt = `## 코드 분석 결과
 
 ### 핵심 요약
 ${analysis.summary}
@@ -53,7 +54,7 @@ ${codeDiff.slice(0, 10000)}
 
 위 분석을 바탕으로 ${style} 스타일의 기술 블로그 글을 작성해주세요.`;
     const response = await anthropic.messages.create({
-        model: "claude-opus-4-5-20251101",
+        model: CLAUDE_MODEL,
         max_tokens: 8192,
         messages: [
             { role: "user", content: userPrompt }
@@ -74,7 +75,7 @@ ${codeDiff.slice(0, 10000)}
 export async function applyFeedbackWithClaude(currentDraft, feedback, apiKey) {
     const anthropic = new Anthropic({ apiKey });
     const response = await anthropic.messages.create({
-        model: "claude-opus-4-5-20251101",
+        model: CLAUDE_MODEL,
         max_tokens: 8192,
         messages: [
             {
@@ -108,6 +109,82 @@ function getStyleGuide(style) {
         [BlogStyle.TROUBLESHOOTING]: "문제 해결 과정을 서술하세요. 문제 상황, 시도한 방법, 최종 해결책 순서로 작성하세요."
     };
     return guides[style];
+}
+/**
+ * Pro Mode: Claude로 코드 분석 (Researcher 역할)
+ */
+export async function analyzeCodeWithClaude(codeDiff, devLog, request, apiKey) {
+    const anthropic = new Anthropic({ apiKey });
+    const prompt = `당신은 코드 분석 전문가입니다. 개발자의 작업 내용을 분석하여
+Writer AI가 블로그 글을 작성할 수 있도록 구조화된 분석을 제공하세요.
+
+## 분석할 내용
+1. 코드 변경사항의 목적과 의도
+2. 아키텍처적 결정과 그 이유
+3. 해결한 문제와 접근 방식
+4. 주목할 만한 기술적 패턴이나 트릭
+
+## 입력
+
+### Code Diff
+\`\`\`
+${codeDiff}
+\`\`\`
+
+${devLog ? `### Dev Log (개발자 메모)\n${devLog}` : ""}
+
+${request ? `### 최우선 제약조건 (반드시 반영)\n${request}` : ""}
+
+## 출력 형식
+반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요:
+
+\`\`\`json
+{
+  "summary": "핵심 요약 (1-2문장)",
+  "problem": "해결한 문제",
+  "approach": "접근 방식과 이유",
+  "key_decisions": ["주요 결정 사항 1", "주요 결정 사항 2"],
+  "technical_insights": ["기술적 인사이트 1", "기술적 인사이트 2"],
+  "narrative_hooks": ["글에서 강조할 포인트 1", "글에서 강조할 포인트 2"]
+}
+\`\`\``;
+    const response = await anthropic.messages.create({
+        model: CLAUDE_MODEL,
+        max_tokens: 4096,
+        messages: [
+            { role: "user", content: prompt }
+        ],
+        system: "당신은 코드 분석 전문가입니다. 반드시 요청된 JSON 형식으로만 응답하세요."
+    });
+    const content = response.content[0];
+    if (content.type !== "text") {
+        throw new Error("예상치 못한 응답 형식입니다");
+    }
+    const responseText = content.text;
+    // JSON 파싱
+    const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+    let analysis;
+    if (jsonMatch) {
+        analysis = JSON.parse(jsonMatch[1]);
+    }
+    else {
+        // JSON 블록이 없으면 전체를 JSON으로 파싱 시도
+        try {
+            analysis = JSON.parse(responseText.trim());
+        }
+        catch {
+            throw new Error("분석 결과 파싱 실패: JSON 형식이 아닙니다.");
+        }
+    }
+    // 필수 필드 검증
+    if (!analysis.summary || !analysis.problem || !analysis.approach) {
+        throw new Error("분석 결과에 필수 필드가 누락되었습니다.");
+    }
+    // 배열 필드 기본값 설정
+    analysis.key_decisions = analysis.key_decisions || [];
+    analysis.technical_insights = analysis.technical_insights || [];
+    analysis.narrative_hooks = analysis.narrative_hooks || [];
+    return analysis;
 }
 function extractMetadata(draft, style) {
     let title = "제목 없음";

@@ -1,4 +1,4 @@
-import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus, GeminiModel, GeminiAnalysis } from "../types.js";
+import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus, GeminiModel, CodeAnalysis } from "../types.js";
 interface GenerateResult {
     draft: string;
     metadata: BlogMetadata;
@@ -18,6 +18,6 @@ export declare function reviewBlogDraft(draft: string, focus: ReviewFocus, model
 /**
  * Pro Mode: Gemini로 코드 분석 (Researcher 역할)
  */
-export declare function analyzeCodeWithGemini(codeDiff: string, devLog: string | undefined, request: string | undefined, apiKey: string): Promise<GeminiAnalysis>;
+export declare function analyzeCodeWithGemini(codeDiff: string, devLog: string | undefined, request: string | undefined, apiKey: string): Promise<CodeAnalysis>;
 export {};
 //# sourceMappingURL=gemini.d.ts.map

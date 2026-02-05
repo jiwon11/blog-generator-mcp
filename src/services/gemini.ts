@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus, GeminiModel, GeminiAnalysis } from "../types.js";
+import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus, GeminiModel, CodeAnalysis } from "../types.js";
 
 interface GenerateResult {
   draft: string;
@@ -381,7 +381,7 @@ export async function analyzeCodeWithGemini(
   devLog: string | undefined,
   request: string | undefined,
   apiKey: string
-): Promise<GeminiAnalysis> {
+): Promise<CodeAnalysis> {
   if (!apiKey) {
     throw new Error("Gemini API 키가 필요합니다.");
   }
@@ -433,13 +433,13 @@ ${request ? `### 최우선 제약조건 (반드시 반영)\n${request}` : ""}
     if (!jsonMatch) {
       // JSON 블록이 없으면 전체를 JSON으로 파싱 시도
       try {
-        return JSON.parse(response.trim()) as GeminiAnalysis;
+        return JSON.parse(response.trim()) as CodeAnalysis;
       } catch {
         throw new Error("분석 결과 파싱 실패: JSON 형식이 아닙니다.");
       }
     }
 
-    const analysis = JSON.parse(jsonMatch[1]) as GeminiAnalysis;
+    const analysis = JSON.parse(jsonMatch[1]) as CodeAnalysis;
 
     // 필수 필드 검증
     if (!analysis.summary || !analysis.problem || !analysis.approach) {
