@@ -47,27 +47,27 @@ export declare const StartDraftInputSchema: z.ZodObject<{
     instructions: z.ZodOptional<z.ZodString>;
     instructions_file: z.ZodOptional<z.ZodString>;
     custom_prompt: z.ZodOptional<z.ZodString>;
-    gemini_api_key: z.ZodString;
+    gemini_api_key: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     input_type: InputType;
     content: string;
     style: BlogStyle;
     language: Language;
     model: GeminiModel;
-    gemini_api_key: string;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
+    gemini_api_key?: string | undefined;
 }, {
     input_type: InputType;
     content: string;
-    gemini_api_key: string;
     style?: BlogStyle | undefined;
     language?: Language | undefined;
     model?: GeminiModel | undefined;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
+    gemini_api_key?: string | undefined;
 }>;
 export declare const GetStatusInputSchema: z.ZodObject<{
     task_id: z.ZodString;
@@ -80,17 +80,17 @@ export declare const ApplyFeedbackInputSchema: z.ZodObject<{
     task_id: z.ZodString;
     feedback: z.ZodString;
     model: z.ZodDefault<z.ZodNativeEnum<typeof GeminiModel>>;
-    gemini_api_key: z.ZodString;
+    gemini_api_key: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     model: GeminiModel;
-    gemini_api_key: string;
     task_id: string;
     feedback: string;
+    gemini_api_key?: string | undefined;
 }, {
-    gemini_api_key: string;
     task_id: string;
     feedback: string;
     model?: GeminiModel | undefined;
+    gemini_api_key?: string | undefined;
 }>;
 export declare const FinalizeDraftInputSchema: z.ZodObject<{
     task_id: z.ZodString;
@@ -107,41 +107,41 @@ export declare const StartReviewInputSchema: z.ZodEffects<z.ZodObject<{
     instructions: z.ZodOptional<z.ZodString>;
     instructions_file: z.ZodOptional<z.ZodString>;
     custom_prompt: z.ZodOptional<z.ZodString>;
-    gemini_api_key: z.ZodString;
+    gemini_api_key: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     model: GeminiModel;
-    gemini_api_key: string;
     focus: ReviewFocus;
     draft?: string | undefined;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
+    gemini_api_key?: string | undefined;
     task_id?: string | undefined;
 }, {
-    gemini_api_key: string;
     draft?: string | undefined;
     model?: GeminiModel | undefined;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
+    gemini_api_key?: string | undefined;
     task_id?: string | undefined;
     focus?: ReviewFocus | undefined;
 }>, {
     model: GeminiModel;
-    gemini_api_key: string;
     focus: ReviewFocus;
     draft?: string | undefined;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
+    gemini_api_key?: string | undefined;
     task_id?: string | undefined;
 }, {
-    gemini_api_key: string;
     draft?: string | undefined;
     model?: GeminiModel | undefined;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
+    gemini_api_key?: string | undefined;
     task_id?: string | undefined;
     focus?: ReviewFocus | undefined;
 }>;
@@ -149,38 +149,38 @@ export declare const ApplyReviewFeedbackInputSchema: z.ZodObject<{
     task_id: z.ZodString;
     feedback: z.ZodString;
     model: z.ZodDefault<z.ZodNativeEnum<typeof GeminiModel>>;
-    gemini_api_key: z.ZodString;
+    gemini_api_key: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     model: GeminiModel;
-    gemini_api_key: string;
     task_id: string;
     feedback: string;
+    gemini_api_key?: string | undefined;
 }, {
-    gemini_api_key: string;
     task_id: string;
     feedback: string;
     model?: GeminiModel | undefined;
+    gemini_api_key?: string | undefined;
 }>;
 export declare const SaveBlogInputSchema: z.ZodEffects<z.ZodObject<{
     task_id: z.ZodOptional<z.ZodString>;
     content: z.ZodOptional<z.ZodString>;
     filename: z.ZodOptional<z.ZodString>;
-    directory: z.ZodDefault<z.ZodString>;
+    directory: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
-    directory: string;
     content?: string | undefined;
     task_id?: string | undefined;
     filename?: string | undefined;
+    directory?: string | undefined;
 }, {
     content?: string | undefined;
     task_id?: string | undefined;
     filename?: string | undefined;
     directory?: string | undefined;
 }>, {
-    directory: string;
     content?: string | undefined;
     task_id?: string | undefined;
     filename?: string | undefined;
+    directory?: string | undefined;
 }, {
     content?: string | undefined;
     task_id?: string | undefined;
@@ -241,41 +241,41 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     language: z.ZodDefault<z.ZodNativeEnum<typeof Language>>;
     instructions: z.ZodOptional<z.ZodString>;
     instructions_file: z.ZodOptional<z.ZodString>;
-    gemini_api_key: z.ZodString;
-    anthropic_api_key: z.ZodString;
+    gemini_api_key: z.ZodOptional<z.ZodString>;
+    anthropic_api_key: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     style: BlogStyle;
     language: Language;
-    gemini_api_key: string;
     code_diff: string;
-    anthropic_api_key: string;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
+    gemini_api_key?: string | undefined;
     dev_log?: string | undefined;
     request?: string | undefined;
+    anthropic_api_key?: string | undefined;
 }, {
-    gemini_api_key: string;
     code_diff: string;
-    anthropic_api_key: string;
     style?: BlogStyle | undefined;
     language?: Language | undefined;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
+    gemini_api_key?: string | undefined;
     dev_log?: string | undefined;
     request?: string | undefined;
+    anthropic_api_key?: string | undefined;
 }>;
 export declare const ApplyFeedbackProInputSchema: z.ZodObject<{
     task_id: z.ZodString;
     feedback: z.ZodString;
-    anthropic_api_key: z.ZodString;
+    anthropic_api_key: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     task_id: string;
     feedback: string;
-    anthropic_api_key: string;
+    anthropic_api_key?: string | undefined;
 }, {
     task_id: string;
     feedback: string;
-    anthropic_api_key: string;
+    anthropic_api_key?: string | undefined;
 }>;
 export type StartDraftInput = z.infer<typeof StartDraftInputSchema>;
 export type GetStatusInput = z.infer<typeof GetStatusInputSchema>;

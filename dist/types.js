@@ -75,8 +75,8 @@ export const StartDraftInputSchema = z.object({
         .optional()
         .describe("간단한 추가 요청 사항 (instructions보다 짧은 요청에 사용)"),
     gemini_api_key: z.string()
-        .min(1, "Gemini API 키는 필수입니다")
-        .describe("Gemini API 키")
+        .optional()
+        .describe("Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)")
 }).strict();
 // 2. blog_get_status
 export const GetStatusInputSchema = z.object({
@@ -96,8 +96,8 @@ export const ApplyFeedbackInputSchema = z.object({
         .default(GeminiModel.FLASH)
         .describe("사용할 Gemini 모델"),
     gemini_api_key: z.string()
-        .min(1, "Gemini API 키는 필수입니다")
-        .describe("Gemini API 키")
+        .optional()
+        .describe("Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)")
 }).strict();
 // 4. blog_finalize_draft
 export const FinalizeDraftInputSchema = z.object({
@@ -129,8 +129,8 @@ export const StartReviewInputSchema = z.object({
         .optional()
         .describe("간단한 추가 검수 요청"),
     gemini_api_key: z.string()
-        .min(1, "Gemini API 키는 필수입니다")
-        .describe("Gemini API 키")
+        .optional()
+        .describe("Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)")
 }).strict().refine((data) => data.task_id || data.draft, { message: "task_id 또는 draft 중 하나는 필수입니다" });
 // 6. blog_apply_review_feedback
 export const ApplyReviewFeedbackInputSchema = z.object({
@@ -144,8 +144,8 @@ export const ApplyReviewFeedbackInputSchema = z.object({
         .default(GeminiModel.FLASH)
         .describe("사용할 Gemini 모델"),
     gemini_api_key: z.string()
-        .min(1, "Gemini API 키는 필수입니다")
-        .describe("Gemini API 키")
+        .optional()
+        .describe("Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)")
 }).strict();
 // 7. blog_save
 export const SaveBlogInputSchema = z.object({
@@ -159,8 +159,8 @@ export const SaveBlogInputSchema = z.object({
         .optional()
         .describe("파일명 (없으면 자동 생성)"),
     directory: z.string()
-        .default("./posts")
-        .describe("저장 디렉토리 경로")
+        .optional()
+        .describe("저장 디렉토리 경로 (없으면 BLOG_SAVE_DIRECTORY 환경변수 또는 ./posts 사용)")
 }).strict().refine((data) => data.task_id || data.content, { message: "task_id 또는 content 중 하나는 필수입니다" });
 // 8. blog_deploy_github
 export const DeployGithubInputSchema = z.object({
@@ -213,11 +213,11 @@ export const StartDraftProInputSchema = z.object({
         .optional()
         .describe("상세 작성 지침이 담긴 마크다운 파일 경로. instructions와 함께 사용하면 파일 내용 + 파라미터 내용이 병합됨"),
     gemini_api_key: z.string()
-        .min(1, "Gemini API 키는 필수입니다")
-        .describe("Gemini API 키 (Researcher용)"),
+        .optional()
+        .describe("Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)"),
     anthropic_api_key: z.string()
-        .min(1, "Anthropic API 키는 필수입니다")
-        .describe("Anthropic API 키 (Writer용)")
+        .optional()
+        .describe("Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)")
 }).strict();
 // 10. blog_apply_feedback_pro (Pro Mode)
 export const ApplyFeedbackProInputSchema = z.object({
@@ -228,7 +228,7 @@ export const ApplyFeedbackProInputSchema = z.object({
         .min(1, "피드백 내용은 필수입니다")
         .describe("수정 요청 사항"),
     anthropic_api_key: z.string()
-        .min(1, "Anthropic API 키는 필수입니다")
-        .describe("Anthropic API 키")
+        .optional()
+        .describe("Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)")
 }).strict();
 //# sourceMappingURL=types.js.map

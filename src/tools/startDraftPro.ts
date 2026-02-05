@@ -4,6 +4,7 @@ import { StartDraftProInputSchema, StartDraftProInput, TaskType, TaskStatus } fr
 import { createTask } from "../services/database.js";
 import { runProDraftGeneration } from "../services/taskRunner.js";
 import { mergeInstructions } from "../services/instructions.js";
+import { getGeminiApiKey, getAnthropicApiKey } from "../services/env.js";
 
 export function registerStartDraftProTool(server: McpServer): void {
   server.registerTool(
@@ -24,8 +25,8 @@ export function registerStartDraftProTool(server: McpServer): void {
 - language: 출력 언어 (기본: ko)
 - instructions: 상세 작성 지침 (선택)
 - instructions_file: 상세 작성 지침 마크다운 파일 경로 (선택, 병합 지원)
-- gemini_api_key: Gemini API 키 (필수)
-- anthropic_api_key: Anthropic API 키 (필수)
+- gemini_api_key: Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)
+- anthropic_api_key: Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)
 
 ## 워크플로우
 1. blog_start_draft_pro → 초안 생성
@@ -49,6 +50,8 @@ Returns:
     async (params: StartDraftProInput) => {
       try {
         const taskId = uuidv4();
+        const geminiApiKey = getGeminiApiKey(params.gemini_api_key);
+        const anthropicApiKey = getAnthropicApiKey(params.anthropic_api_key);
 
         // instructions 병합 (파일 + 파라미터)
         const mergedInstructions = await mergeInstructions(
@@ -75,8 +78,8 @@ Returns:
           params.style,
           params.language,
           mergedInstructions,
-          params.gemini_api_key,
-          params.anthropic_api_key
+          geminiApiKey,
+          anthropicApiKey
         ).catch(console.error);
 
         const output = {

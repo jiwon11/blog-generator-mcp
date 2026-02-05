@@ -4,6 +4,7 @@ import { StartReviewInputSchema, StartReviewInput, TaskType, TaskStatus, GeminiM
 import { createTask, getTask } from "../services/database.js";
 import { runReviewGeneration } from "../services/taskRunner.js";
 import { mergeInstructions } from "../services/instructions.js";
+import { getGeminiApiKey } from "../services/env.js";
 
 export function registerStartReviewTool(server: McpServer): void {
   server.registerTool(
@@ -44,7 +45,7 @@ Args:
   - instructions: 상세 검수 지침 (선택)
   - instructions_file: 상세 검수 지침 마크다운 파일 경로 (선택)
   - custom_prompt: 간단한 추가 검수 요청 (선택)
-  - gemini_api_key: Gemini API 키 (필수)
+  - gemini_api_key: Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)
 
 Returns:
   - task_id: 검수 작업 ID
@@ -62,6 +63,7 @@ Returns:
       try {
         let draft: string;
         const model = params.model || GeminiModel.FLASH;
+        const apiKey = getGeminiApiKey(params.gemini_api_key);
 
         // 기존 작업에서 draft 가져오기 또는 직접 입력 사용
         if (params.task_id) {
@@ -123,7 +125,7 @@ Returns:
           model,
           mergedInstructions,
           params.custom_prompt,
-          params.gemini_api_key
+          apiKey
         ).catch(console.error);
 
         const output = {

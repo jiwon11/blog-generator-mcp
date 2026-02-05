@@ -3,6 +3,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { SaveBlogInputSchema, SaveBlogInput, SaveOutput, TaskStatus } from "../types.js";
 import { getTask } from "../services/database.js";
+import { getBlogSaveDirectory } from "../services/env.js";
 
 function generateFilename(content: string): string {
   // Try to extract title from content
@@ -36,7 +37,7 @@ Args:
   - task_id: 저장할 작업 ID (선택)
   - content: 직접 저장할 마크다운 콘텐츠 (선택)
   - filename: 파일명 (선택, 없으면 자동 생성)
-  - directory: 저장 디렉토리 경로 (기본: ./posts)
+  - directory: 저장 디렉토리 경로 (없으면 BLOG_SAVE_DIRECTORY 환경변수 또는 ./posts)
 
 Returns:
   - filepath: 저장된 파일의 전체 경로
@@ -97,7 +98,7 @@ Returns:
           };
         }
 
-        const directory = params.directory || "./posts";
+        const directory = getBlogSaveDirectory(params.directory);
         const filename = params.filename || generateFilename(content);
 
         // Ensure filename ends with .md

@@ -1,6 +1,7 @@
 import { ApplyFeedbackProInputSchema, TaskStatus, TaskType } from "../types.js";
 import { getTask, addFeedbackToHistory } from "../services/database.js";
 import { runProFeedbackApplication } from "../services/taskRunner.js";
+import { getAnthropicApiKey } from "../services/env.js";
 export function registerApplyFeedbackProTool(server) {
     server.registerTool("blog_apply_feedback_pro", {
         title: "Apply Feedback (Pro Mode)",
@@ -11,7 +12,7 @@ blog_start_draft_pro로 생성된 초안에만 사용할 수 있습니다.
 Args:
   - task_id: 피드백을 적용할 Pro 작업 ID
   - feedback: 수정 요청 사항
-  - anthropic_api_key: Anthropic API 키 (필수)
+  - anthropic_api_key: Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)
 
 Returns:
   - task_id: 작업 ID
@@ -27,6 +28,7 @@ Returns:
     }, async (params) => {
         try {
             const task = await getTask(params.task_id);
+            const apiKey = getAnthropicApiKey(params.anthropic_api_key);
             if (!task) {
                 return {
                     content: [{
@@ -66,7 +68,7 @@ Returns:
             // 피드백 히스토리에 추가
             await addFeedbackToHistory(params.task_id, params.feedback);
             // 백그라운드에서 Claude로 피드백 반영
-            runProFeedbackApplication(params.task_id, params.feedback, params.anthropic_api_key).catch(console.error);
+            runProFeedbackApplication(params.task_id, params.feedback, apiKey).catch(console.error);
             const output = {
                 task_id: params.task_id,
                 status: TaskStatus.PENDING,

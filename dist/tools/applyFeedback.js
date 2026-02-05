@@ -1,6 +1,7 @@
 import { ApplyFeedbackInputSchema, TaskStatus, GeminiModel } from "../types.js";
 import { getTask, addFeedbackToHistory } from "../services/database.js";
 import { runFeedbackApplication } from "../services/taskRunner.js";
+import { getGeminiApiKey } from "../services/env.js";
 export function registerApplyFeedbackTool(server) {
     server.registerTool("blog_apply_feedback", {
         title: "Apply Feedback to Draft",
@@ -16,7 +17,7 @@ Args:
   - task_id: 피드백을 적용할 작업 ID
   - feedback: 수정 요청 사항
   - model: Gemini 모델 (기본: gemini-1.5-flash)
-  - gemini_api_key: Gemini API 키 (필수)
+  - gemini_api_key: Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)
 
 Returns:
   - task_id: 작업 ID
@@ -33,6 +34,7 @@ Returns:
         try {
             const task = await getTask(params.task_id);
             const model = params.model || GeminiModel.FLASH;
+            const apiKey = getGeminiApiKey(params.gemini_api_key);
             if (!task) {
                 return {
                     content: [{
@@ -63,7 +65,7 @@ Returns:
             // 피드백 히스토리에 추가
             await addFeedbackToHistory(params.task_id, params.feedback);
             // 백그라운드에서 피드백 반영
-            runFeedbackApplication(params.task_id, params.feedback, model, params.gemini_api_key).catch(console.error);
+            runFeedbackApplication(params.task_id, params.feedback, model, apiKey).catch(console.error);
             const output = {
                 task_id: params.task_id,
                 status: TaskStatus.PENDING,

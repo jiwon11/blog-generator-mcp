@@ -3,6 +3,7 @@ import { StartDraftInputSchema, TaskType, TaskStatus, GeminiModel } from "../typ
 import { createTask } from "../services/database.js";
 import { runDraftGeneration } from "../services/taskRunner.js";
 import { mergeInstructions } from "../services/instructions.js";
+import { getGeminiApiKey } from "../services/env.js";
 export function registerStartDraftTool(server) {
     server.registerTool("blog_start_draft", {
         title: "Start Blog Draft Generation",
@@ -48,7 +49,7 @@ Args:
   - instructions: 상세 작성 지침 (선택)
   - instructions_file: 상세 작성 지침 마크다운 파일 경로 (선택)
   - custom_prompt: 간단한 추가 요청 (선택)
-  - gemini_api_key: Gemini API 키 (필수)
+  - gemini_api_key: Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)
 
 Returns:
   - task_id: 작업 추적용 ID
@@ -65,6 +66,7 @@ Returns:
         try {
             const taskId = uuidv4();
             const model = params.model || GeminiModel.FLASH;
+            const apiKey = getGeminiApiKey(params.gemini_api_key);
             // instructions 병합 (파일 + 파라미터)
             const mergedInstructions = await mergeInstructions(params.instructions_file, params.instructions);
             // 작업 생성
@@ -78,7 +80,7 @@ Returns:
                 custom_prompt: params.custom_prompt
             });
             // 백그라운드에서 실행 (await 하지 않음)
-            runDraftGeneration(taskId, params.input_type, params.content, params.style, params.language, model, mergedInstructions, params.custom_prompt, params.gemini_api_key).catch(console.error);
+            runDraftGeneration(taskId, params.input_type, params.content, params.style, params.language, model, mergedInstructions, params.custom_prompt, apiKey).catch(console.error);
             const output = {
                 task_id: taskId,
                 status: TaskStatus.PENDING,
