@@ -1,6 +1,21 @@
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
-import { resolve } from "path";
+import { resolve, dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// 패키지 루트: src/services/ 또는 dist/services/ 에서 2단계 상위
+const PACKAGE_ROOT = resolve(__dirname, "../..");
+const DEFAULT_INSTRUCTIONS_PATH = join(PACKAGE_ROOT, "example-instructions.md");
+
+/**
+ * 기본 instructions 파일 경로를 반환합니다.
+ */
+export function getDefaultInstructionsPath(): string {
+  return DEFAULT_INSTRUCTIONS_PATH;
+}
 
 /**
  * 마크다운 파일에서 instructions를 읽어옵니다.
@@ -27,7 +42,8 @@ export async function readInstructionsFile(filePath: string): Promise<string | n
 
 /**
  * 파일과 파라미터의 instructions를 병합합니다.
- * @param instructionsFile 파일 경로 (선택)
+ * instructions_file이 지정되지 않으면 기본 instructions 파일(example-instructions.md)을 사용합니다.
+ * @param instructionsFile 파일 경로 (선택, 미지정시 기본 파일 사용)
  * @param instructions 파라미터로 전달된 instructions (선택)
  * @returns 병합된 instructions 또는 undefined
  */
@@ -37,12 +53,13 @@ export async function mergeInstructions(
 ): Promise<string | undefined> {
   let fileContent: string | null = null;
 
-  // 파일에서 읽기
-  if (instructionsFile) {
-    fileContent = await readInstructionsFile(instructionsFile);
-    if (fileContent === null) {
-      throw new Error(`Instructions 파일을 찾을 수 없습니다: ${instructionsFile}`);
-    }
+  // 파일에서 읽기 (지정된 파일이 없으면 기본 파일 사용)
+  const targetFile = instructionsFile || DEFAULT_INSTRUCTIONS_PATH;
+  fileContent = await readInstructionsFile(targetFile);
+
+  if (instructionsFile && fileContent === null) {
+    // 사용자가 명시적으로 지정한 파일이 없는 경우에만 에러
+    throw new Error(`Instructions 파일을 찾을 수 없습니다: ${instructionsFile}`);
   }
 
   // 병합
