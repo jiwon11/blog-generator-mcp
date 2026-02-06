@@ -29,40 +29,11 @@ function getPromptTemplate(
     ? "한국어로 작성해주세요."
     : "Write in English.";
 
-  const styleInstructions: Record<BlogStyle, string> = {
-    [BlogStyle.TUTORIAL]: `
-      - 단계별로 명확하게 설명
-      - 코드 예제 포함
-      - 초보자도 따라할 수 있도록 상세히 설명
-      - 실습 가능한 예제 제공
-      - 각 단계의 흐름을 Mermaid 플로우차트로 시각화
-      - 전체 아키텍처를 Mermaid 다이어그램으로 제시
-    `,
-    [BlogStyle.TIL]: `
-      - Today I Learned 형식
-      - 짧고 간결하게 핵심만 정리
-      - 배운 내용과 인사이트 중심
-      - 실제 적용 사례 포함
-      - 핵심 개념을 Mermaid 다이어그램으로 시각화
-      - Before/After 비교 블록 활용
-    `,
-    [BlogStyle.DEEP_DIVE]: `
-      - 심층적인 기술 분석
-      - 내부 동작 원리 설명
-      - 성능 고려사항 포함
-      - 고급 사용 패턴 소개
-      - 시스템 아키텍처를 Mermaid 다이어그램으로 시각화
-      - 데이터 흐름을 시퀀스 다이어그램으로 표현
-      - 성능 비교를 표로 정리
-    `,
-    [BlogStyle.TROUBLESHOOTING]: `
-      - 문제 상황 명확히 설명
-      - 원인 분석
-      - 해결 과정 단계별 설명
-      - 예방 방법 및 팁 제공
-      - 디버깅 흐름을 Mermaid 플로우차트로 시각화
-      - Before/After 코드 비교 블록 필수
-    `
+  const styleNames: Record<BlogStyle, string> = {
+    [BlogStyle.TUTORIAL]: "Tutorial (튜토리얼)",
+    [BlogStyle.TIL]: "TIL (Today I Learned)",
+    [BlogStyle.DEEP_DIVE]: "Deep-dive (심층 분석)",
+    [BlogStyle.TROUBLESHOOTING]: "Troubleshooting (문제 해결)"
   };
 
   const inputInstructions: Record<InputType, string> = {
@@ -94,9 +65,8 @@ ${content}`
 
 ${inputInstructions[inputType]}
 
-글 스타일: ${style}
-기본 스타일 가이드라인:
-${styleInstructions[style]}`;
+글 스타일: ${styleNames[style]}
+아래 "상세 작성 지침"에 포함된 글 유형별 구조, 톤, 분량 가이드를 반드시 따르세요.`;
 
   // 상세 지침이 있으면 추가 (최우선 적용)
   if (instructions) {
