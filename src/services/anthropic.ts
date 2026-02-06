@@ -17,20 +17,39 @@ export async function writeBlogWithClaude(
   style: BlogStyle,
   language: Language,
   instructions: string | undefined,
-  apiKey: string
+  apiKey: string,
+  webSearch: boolean = false
 ): Promise<{ draft: string; metadata: BlogMetadata }> {
   const anthropic = new Anthropic({ apiKey });
 
   const styleGuide = getStyleGuide(style);
   const langGuide = language === Language.KO ? "한국어로 작성하세요." : "Write in English.";
 
-  const systemPrompt = `당신은 뛰어난 기술 블로그 작가입니다.
+  let systemPrompt = `당신은 뛰어난 기술 블로그 작가입니다.
 코드 분석 인사이트를 바탕으로 매력적인 기술 블로그 글을 작성합니다.
 
 ${styleGuide}
 ${langGuide}
 
-${instructions ? `\n추가 지침:\n${instructions}` : ""}
+시각적 요소 (필수 - 반드시 따르세요):
+- 글 전체에 최소 3개 이상의 시각적 요소를 반드시 포함하세요
+- Mermaid 다이어그램을 적극 활용하세요 (sequenceDiagram, flowchart, stateDiagram-v2, classDiagram, erDiagram 등)
+- 비교/분석 내용은 반드시 표(Table)로 정리하세요
+- 주요 개념은 Mermaid 다이어그램으로 시각화하세요
+- Before/After 비교 시 코드 블록을 나란히 배치하고 ❌/✅ 이모지로 구분하세요
+- 핵심 포인트, 주의사항, 팁은 인용 블록(>)과 이모지(💡, ⚠️, 🔥, 📝)로 강조하세요
+- 시스템 흐름이나 프로세스는 반드시 시퀀스 다이어그램 또는 플로우차트로 표현하세요
+
+${instructions ? `\n추가 지침:\n${instructions}` : ""}`;
+
+  if (webSearch) {
+    systemPrompt += `\n\n웹 검색 활용 지시:
+- 웹 검색을 통해 최신 정보, 통계, 공식 문서 링크를 적극 활용하세요
+- 검색 결과를 바탕으로 정확한 버전 정보, 최신 동향, 참고 자료를 포함하세요
+- 출처가 있는 정보는 링크를 함께 제공하세요`;
+  }
+
+  systemPrompt += `
 
 응답 형식:
 ---
@@ -67,21 +86,27 @@ ${codeDiff.slice(0, 10000)}
 
 위 분석을 바탕으로 ${style} 스타일의 기술 블로그 글을 작성해주세요.`;
 
+  const tools: Anthropic.Messages.ToolUnion[] | undefined = webSearch
+    ? [{ type: "web_search_20250305" as const, name: "web_search" as const }]
+    : undefined;
+
   const response = await anthropic.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 8192,
     messages: [
       { role: "user", content: userPrompt }
     ],
-    system: systemPrompt
+    system: systemPrompt,
+    ...(tools && { tools })
   });
 
-  const content = response.content[0];
-  if (content.type !== "text") {
+  // 웹 검색 시 TextBlock, ServerToolUseBlock, WebSearchToolResultBlock이 섞여 나올 수 있으므로 텍스트만 추출
+  const textBlocks = response.content.filter(b => b.type === "text");
+  if (textBlocks.length === 0) {
     throw new Error("예상치 못한 응답 형식입니다");
   }
 
-  const draft = content.text;
+  const draft = textBlocks.map(b => b.text).join("\n\n");
   const metadata = extractMetadata(draft, style);
 
   return { draft, metadata };
@@ -130,10 +155,10 @@ ${feedback}
 
 function getStyleGuide(style: BlogStyle): string {
   const guides: Record<BlogStyle, string> = {
-    [BlogStyle.TUTORIAL]: "단계별로 따라할 수 있는 튜토리얼 형식으로 작성하세요. 코드 예제와 설명을 번갈아 배치하세요.",
-    [BlogStyle.TIL]: "오늘 배운 것(TIL) 형식으로 간결하게 작성하세요. 핵심 인사이트에 집중하세요.",
-    [BlogStyle.DEEP_DIVE]: "기술적 깊이가 있는 분석 글을 작성하세요. 왜 이런 결정을 했는지, 트레이드오프는 무엇인지 설명하세요.",
-    [BlogStyle.TROUBLESHOOTING]: "문제 해결 과정을 서술하세요. 문제 상황, 시도한 방법, 최종 해결책 순서로 작성하세요."
+    [BlogStyle.TUTORIAL]: "단계별로 따라할 수 있는 튜토리얼 형식으로 작성하세요. 코드 예제와 설명을 번갈아 배치하세요. 각 단계의 흐름을 Mermaid 플로우차트로 시각화하고, 전체 아키텍처를 다이어그램으로 제시하세요.",
+    [BlogStyle.TIL]: "오늘 배운 것(TIL) 형식으로 간결하게 작성하세요. 핵심 인사이트에 집중하세요. 핵심 개념을 Mermaid 다이어그램으로 시각화하고 Before/After 비교 블록을 활용하세요.",
+    [BlogStyle.DEEP_DIVE]: "기술적 깊이가 있는 분석 글을 작성하세요. 왜 이런 결정을 했는지, 트레이드오프는 무엇인지 설명하세요. 시스템 아키텍처와 데이터 흐름을 Mermaid 다이어그램으로 시각화하고, 성능 비교를 표로 정리하세요.",
+    [BlogStyle.TROUBLESHOOTING]: "문제 해결 과정을 서술하세요. 문제 상황, 시도한 방법, 최종 해결책 순서로 작성하세요. 디버깅 흐름을 Mermaid 플로우차트로 시각화하고 Before/After 코드 비교 블록을 반드시 포함하세요."
   };
   return guides[style];
 }
@@ -145,7 +170,8 @@ export async function analyzeCodeWithClaude(
   codeDiff: string,
   devLog: string | undefined,
   request: string | undefined,
-  apiKey: string
+  apiKey: string,
+  webSearch: boolean = false
 ): Promise<CodeAnalysis> {
   const anthropic = new Anthropic({ apiKey });
 
@@ -183,21 +209,32 @@ ${request ? `### 최우선 제약조건 (반드시 반영)\n${request}` : ""}
 }
 \`\`\``;
 
+  let systemPrompt = "당신은 코드 분석 전문가입니다. 반드시 요청된 JSON 형식으로만 응답하세요.";
+  if (webSearch) {
+    systemPrompt += "\n웹 검색을 활용하여 관련 기술의 최신 정보와 모범 사례를 참고하세요.";
+  }
+
+  const tools: Anthropic.Messages.ToolUnion[] | undefined = webSearch
+    ? [{ type: "web_search_20250305" as const, name: "web_search" as const }]
+    : undefined;
+
   const response = await anthropic.messages.create({
     model: CLAUDE_MODEL,
     max_tokens: 4096,
     messages: [
       { role: "user", content: prompt }
     ],
-    system: "당신은 코드 분석 전문가입니다. 반드시 요청된 JSON 형식으로만 응답하세요."
+    system: systemPrompt,
+    ...(tools && { tools })
   });
 
-  const content = response.content[0];
-  if (content.type !== "text") {
+  // 웹 검색 시 여러 블록이 섞여 나올 수 있으므로 텍스트만 추출
+  const textBlocks = response.content.filter(b => b.type === "text");
+  if (textBlocks.length === 0) {
     throw new Error("예상치 못한 응답 형식입니다");
   }
 
-  const responseText = content.text;
+  const responseText = textBlocks.map(b => b.text).join("\n");
 
   // JSON 파싱
   const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);

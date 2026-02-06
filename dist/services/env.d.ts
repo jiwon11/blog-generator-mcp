@@ -4,6 +4,7 @@
 export declare const ENV_KEYS: {
     readonly GEMINI_API_KEY: "GEMINI_API_KEY";
     readonly ANTHROPIC_API_KEY: "ANTHROPIC_API_KEY";
+    readonly NOTION_API_KEY: "NOTION_API_KEY";
     readonly BLOG_SAVE_DIRECTORY: "BLOG_SAVE_DIRECTORY";
 };
 /**
@@ -16,7 +17,11 @@ export declare function getGeminiApiKey(paramValue?: string): string;
  */
 export declare function getAnthropicApiKey(paramValue?: string): string;
 /**
- * 블로그 저장 디렉토리를 가져옵니다 (파라미터 우선, 없으면 환경변수, 기본값 ./posts)
+ * Notion API 키를 가져옵니다 (파라미터 우선, 없으면 환경변수)
  */
-export declare function getBlogSaveDirectory(paramValue?: string): string;
+export declare function getNotionApiKey(paramValue?: string): string;
+/**
+ * 블로그 저장 디렉토리를 가져옵니다 (BLOG_SAVE_DIRECTORY 환경변수 필수)
+ */
+export declare function getBlogSaveDirectory(): string;
 //# sourceMappingURL=env.d.ts.map

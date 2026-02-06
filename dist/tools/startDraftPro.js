@@ -28,6 +28,7 @@ Args:
   - instructions: 상세 작성 지침 (선택)
   - instructions_file: 상세 작성 지침 마크다운 파일 경로 (선택, instructions와 병합 가능)
   - anthropic_api_key: Anthropic API 키 (환경변수로 대체 가능)
+  - web_search: 웹 검색 활용 여부 (기본: false). true로 설정하면 최신 정보와 참고 자료를 웹에서 검색하여 포함
 
 Returns:
   - task_id: 작업 추적용 ID
@@ -56,7 +57,7 @@ Returns:
                 instructions: mergedInstructions
             });
             // 백그라운드에서 생성 시작
-            runProDraftGeneration(taskId, params.code_diff, params.dev_log, params.request, params.style, params.language, mergedInstructions, anthropicApiKey).catch(err => console.error("Pro draft generation error:", err));
+            runProDraftGeneration(taskId, params.code_diff, params.dev_log, params.request, params.style, params.language, mergedInstructions, anthropicApiKey, params.web_search ?? false).catch(err => console.error("Pro draft generation error:", err));
             const output = {
                 task_id: taskId,
                 status: TaskStatus.PENDING,

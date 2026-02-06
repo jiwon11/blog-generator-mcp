@@ -44,7 +44,8 @@ export async function runDraftGeneration(
   model: GeminiModel,
   instructions: string | undefined,
   customPrompt: string | undefined,
-  apiKey: string
+  apiKey: string,
+  webSearch: boolean = false
 ): Promise<void> {
   try {
     // 상태 업데이트: 진행 중
@@ -65,7 +66,8 @@ export async function runDraftGeneration(
       model,
       instructions,
       customPrompt,
-      apiKey
+      apiKey,
+      webSearch
     );
 
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
@@ -205,7 +207,8 @@ export async function runProDraftGeneration(
   style: BlogStyle,
   language: Language,
   instructions: string | undefined,
-  anthropicApiKey: string
+  anthropicApiKey: string,
+  webSearch: boolean = false
 ): Promise<void> {
   try {
     // 1단계: Claude로 코드 분석 (Researcher)
@@ -216,7 +219,8 @@ export async function runProDraftGeneration(
       codeDiff,
       devLog,
       request,
-      anthropicApiKey
+      anthropicApiKey,
+      webSearch
     );
 
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 40);
@@ -229,7 +233,8 @@ export async function runProDraftGeneration(
       style,
       language,
       instructions,
-      anthropicApiKey
+      anthropicApiKey,
+      webSearch
     );
 
     await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);

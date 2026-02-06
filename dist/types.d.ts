@@ -3,7 +3,8 @@ export declare enum InputType {
     KEYWORD = "keyword",
     CODE = "code",
     MEMO = "memo",
-    GIT_PUSH = "git_push"
+    GIT_PUSH = "git_push",
+    NOTION = "notion"
 }
 export declare enum BlogStyle {
     TUTORIAL = "tutorial",
@@ -48,16 +49,20 @@ export declare const StartDraftInputSchema: z.ZodObject<{
     instructions_file: z.ZodOptional<z.ZodString>;
     custom_prompt: z.ZodOptional<z.ZodString>;
     gemini_api_key: z.ZodOptional<z.ZodString>;
+    notion_api_key: z.ZodOptional<z.ZodString>;
+    web_search: z.ZodDefault<z.ZodBoolean>;
 }, "strict", z.ZodTypeAny, {
     input_type: InputType;
     content: string;
     style: BlogStyle;
     language: Language;
     model: GeminiModel;
+    web_search: boolean;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
     gemini_api_key?: string | undefined;
+    notion_api_key?: string | undefined;
 }, {
     input_type: InputType;
     content: string;
@@ -68,6 +73,8 @@ export declare const StartDraftInputSchema: z.ZodObject<{
     instructions_file?: string | undefined;
     custom_prompt?: string | undefined;
     gemini_api_key?: string | undefined;
+    notion_api_key?: string | undefined;
+    web_search?: boolean | undefined;
 }>;
 export declare const GetStatusInputSchema: z.ZodObject<{
     task_id: z.ZodString;
@@ -165,27 +172,22 @@ export declare const SaveBlogInputSchema: z.ZodEffects<z.ZodObject<{
     task_id: z.ZodOptional<z.ZodString>;
     content: z.ZodOptional<z.ZodString>;
     filename: z.ZodOptional<z.ZodString>;
-    directory: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
     content?: string | undefined;
     task_id?: string | undefined;
     filename?: string | undefined;
-    directory?: string | undefined;
 }, {
     content?: string | undefined;
     task_id?: string | undefined;
     filename?: string | undefined;
-    directory?: string | undefined;
 }>, {
     content?: string | undefined;
     task_id?: string | undefined;
     filename?: string | undefined;
-    directory?: string | undefined;
 }, {
     content?: string | undefined;
     task_id?: string | undefined;
     filename?: string | undefined;
-    directory?: string | undefined;
 }>;
 export declare const DeployGithubInputSchema: z.ZodEffects<z.ZodObject<{
     task_id: z.ZodOptional<z.ZodString>;
@@ -242,9 +244,11 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     instructions: z.ZodOptional<z.ZodString>;
     instructions_file: z.ZodOptional<z.ZodString>;
     anthropic_api_key: z.ZodOptional<z.ZodString>;
+    web_search: z.ZodDefault<z.ZodBoolean>;
 }, "strict", z.ZodTypeAny, {
     style: BlogStyle;
     language: Language;
+    web_search: boolean;
     code_diff: string;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
@@ -257,6 +261,7 @@ export declare const StartDraftProInputSchema: z.ZodObject<{
     language?: Language | undefined;
     instructions?: string | undefined;
     instructions_file?: string | undefined;
+    web_search?: boolean | undefined;
     dev_log?: string | undefined;
     request?: string | undefined;
     anthropic_api_key?: string | undefined;

@@ -5,7 +5,8 @@ export enum InputType {
   KEYWORD = "keyword",
   CODE = "code",
   MEMO = "memo",
-  GIT_PUSH = "git_push"
+  GIT_PUSH = "git_push",
+  NOTION = "notion"
 }
 
 export enum BlogStyle {
@@ -53,7 +54,7 @@ export enum GeminiModel {
 // 1. blog_start_draft
 export const StartDraftInputSchema = z.object({
   input_type: z.nativeEnum(InputType)
-    .describe("입력 유형: keyword, code, memo, git_push"),
+    .describe("입력 유형: keyword, code, memo, git_push, notion"),
   content: z.string()
     .min(1, "콘텐츠는 필수입니다")
     .max(50000, "콘텐츠가 너무 깁니다")
@@ -78,7 +79,13 @@ export const StartDraftInputSchema = z.object({
     .describe("간단한 추가 요청 사항 (instructions보다 짧은 요청에 사용)"),
   gemini_api_key: z.string()
     .optional()
-    .describe("Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)")
+    .describe("Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)"),
+  notion_api_key: z.string()
+    .optional()
+    .describe("Notion API 키 (input_type이 notion일 때 필요, 없으면 NOTION_API_KEY 환경변수 사용)"),
+  web_search: z.boolean()
+    .default(false)
+    .describe("웹 검색을 활용하여 최신 정보와 참고 자료를 포함 (기본: false)")
 }).strict();
 
 // 2. blog_get_status
@@ -168,10 +175,7 @@ export const SaveBlogInputSchema = z.object({
     .describe("직접 저장할 마크다운 콘텐츠"),
   filename: z.string()
     .optional()
-    .describe("파일명 (없으면 자동 생성)"),
-  directory: z.string()
-    .optional()
-    .describe("저장 디렉토리 경로 (없으면 BLOG_SAVE_DIRECTORY 환경변수 또는 ./posts 사용)")
+    .describe("파일명 (없으면 자동 생성)")
 }).strict().refine(
   (data) => data.task_id || data.content,
   { message: "task_id 또는 content 중 하나는 필수입니다" }
@@ -233,7 +237,10 @@ export const StartDraftProInputSchema = z.object({
     .describe("상세 작성 지침이 담긴 마크다운 파일 경로. instructions와 함께 사용하면 파일 내용 + 파라미터 내용이 병합됨"),
   anthropic_api_key: z.string()
     .optional()
-    .describe("Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)")
+    .describe("Anthropic API 키 (없으면 ANTHROPIC_API_KEY 환경변수 사용)"),
+  web_search: z.boolean()
+    .default(false)
+    .describe("웹 검색을 활용하여 최신 정보와 참고 자료를 포함 (기본: false)")
 }).strict();
 
 // 10. blog_apply_feedback_pro (Pro Mode - HTTP 모드 전용)

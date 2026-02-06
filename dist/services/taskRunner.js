@@ -20,7 +20,7 @@ function sendNotification(taskId, status, message) {
         }
     }
 }
-export async function runDraftGeneration(taskId, inputType, content, style, language, model, instructions, customPrompt, apiKey) {
+export async function runDraftGeneration(taskId, inputType, content, style, language, model, instructions, customPrompt, apiKey, webSearch = false) {
     try {
         // 상태 업데이트: 진행 중
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
@@ -29,7 +29,7 @@ export async function runDraftGeneration(taskId, inputType, content, style, lang
         // 진행률 업데이트
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 30);
         // Gemini로 초안 생성
-        const result = await generateBlogDraft(inputType, content, style, language, model, instructions, customPrompt, apiKey);
+        const result = await generateBlogDraft(inputType, content, style, language, model, instructions, customPrompt, apiKey, webSearch);
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
         // 결과 저장
         const taskResult = {
@@ -102,16 +102,16 @@ async function generateReview(draft, focus, model, instructions, customPrompt, a
 /**
  * Pro Mode: Claude Opus(분석) → Claude Opus(작성) 파이프라인
  */
-export async function runProDraftGeneration(taskId, codeDiff, devLog, request, style, language, instructions, anthropicApiKey) {
+export async function runProDraftGeneration(taskId, codeDiff, devLog, request, style, language, instructions, anthropicApiKey, webSearch = false) {
     try {
         // 1단계: Claude로 코드 분석 (Researcher)
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 10);
         sendNotification(taskId, TaskStatus.IN_PROGRESS, "Pro Mode: Claude Opus가 코드를 분석 중입니다...");
-        const analysis = await analyzeCodeWithClaude(codeDiff, devLog, request, anthropicApiKey);
+        const analysis = await analyzeCodeWithClaude(codeDiff, devLog, request, anthropicApiKey, webSearch);
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 40);
         sendNotification(taskId, TaskStatus.IN_PROGRESS, `분석 완료: "${analysis.summary}" - Claude가 글을 작성 중입니다...`);
         // 2단계: Claude로 블로그 작성 (Writer)
-        const result = await writeBlogWithClaude(analysis, codeDiff, style, language, instructions, anthropicApiKey);
+        const result = await writeBlogWithClaude(analysis, codeDiff, style, language, instructions, anthropicApiKey, webSearch);
         await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
         // 결과 저장 (분석 결과도 함께 저장)
         const taskResult = {

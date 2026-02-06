@@ -1,10 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { v4 as uuidv4 } from "uuid";
-import { StartDraftInputSchema, StartDraftInput, TaskType, TaskStatus, GeminiModel, StartTaskOutputSchema } from "../types.js";
+import { StartDraftInputSchema, StartDraftInput, InputType, TaskType, TaskStatus, GeminiModel, StartTaskOutputSchema } from "../types.js";
 import { createTask } from "../services/database.js";
 import { runDraftGeneration } from "../services/taskRunner.js";
 import { mergeInstructions } from "../services/instructions.js";
-import { getGeminiApiKey } from "../services/env.js";
+import { getGeminiApiKey, getNotionApiKey } from "../services/env.js";
+import { fetchNotionPageAsMarkdown } from "../services/notion.js";
 
 export function registerStartDraftTool(server: McpServer): void {
   server.registerTool(
@@ -18,6 +19,7 @@ export function registerStartDraftTool(server: McpServer): void {
 - code: 코드 스니펫을 설명하는 글 생성
 - memo: 메모/노트를 완성된 글로 확장
 - git_push: git 변경사항으로 개발일지 생성
+- notion: Notion 페이지 URL을 입력하면 내용을 자동으로 가져와서 블로그 글 생성 (content에 Notion URL 입력, notion_api_key 필요)
 
 ## 글 스타일 (style)
 - tutorial: 단계별 튜토리얼 (기본값)
@@ -54,6 +56,8 @@ Args:
   - instructions_file: 상세 작성 지침 마크다운 파일 경로 (선택)
   - custom_prompt: 간단한 추가 요청 (선택)
   - gemini_api_key: Gemini API 키 (없으면 GEMINI_API_KEY 환경변수 사용)
+  - notion_api_key: Notion API 키 (input_type이 notion일 때 필요, 없으면 NOTION_API_KEY 환경변수 사용)
+  - web_search: 웹 검색 활용 여부 (기본: false). true로 설정하면 최신 정보, 통계, 참고 자료를 웹에서 검색하여 포함
 
 Returns:
   - task_id: 작업 추적용 ID
@@ -74,6 +78,14 @@ Returns:
         const model = params.model || GeminiModel.FLASH;
         const apiKey = getGeminiApiKey(params.gemini_api_key);
 
+        // Notion 입력인 경우 콘텐츠를 사전 fetch (orphan task 방지를 위해 백그라운드 실행 전에 수행)
+        let content = params.content;
+        if (params.input_type === InputType.NOTION) {
+          const notionApiKey = getNotionApiKey(params.notion_api_key);
+          const notionResult = await fetchNotionPageAsMarkdown(content, notionApiKey);
+          content = notionResult.markdown;
+        }
+
         // instructions 병합 (파일 + 파라미터)
         const mergedInstructions = await mergeInstructions(
           params.instructions_file,
@@ -83,7 +95,7 @@ Returns:
         // 작업 생성
         await createTask(taskId, TaskType.DRAFT, {
           input_type: params.input_type,
-          content: params.content,
+          content,
           style: params.style,
           language: params.language,
           model,
@@ -95,13 +107,14 @@ Returns:
         runDraftGeneration(
           taskId,
           params.input_type,
-          params.content,
+          content,
           params.style,
           params.language,
           model,
           mergedInstructions,
           params.custom_prompt,
-          apiKey
+          apiKey,
+          params.web_search ?? false
         ).catch(console.error);
 
         const output = {

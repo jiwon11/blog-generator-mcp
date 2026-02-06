@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, Tool } from "@google/generative-ai";
 import { InputType, BlogStyle, Language, BlogMetadata, ReviewFocus, GeminiModel, CodeAnalysis } from "../types.js";
 
 interface GenerateResult {
@@ -35,24 +35,33 @@ function getPromptTemplate(
       - 코드 예제 포함
       - 초보자도 따라할 수 있도록 상세히 설명
       - 실습 가능한 예제 제공
+      - 각 단계의 흐름을 Mermaid 플로우차트로 시각화
+      - 전체 아키텍처를 Mermaid 다이어그램으로 제시
     `,
     [BlogStyle.TIL]: `
       - Today I Learned 형식
       - 짧고 간결하게 핵심만 정리
       - 배운 내용과 인사이트 중심
       - 실제 적용 사례 포함
+      - 핵심 개념을 Mermaid 다이어그램으로 시각화
+      - Before/After 비교 블록 활용
     `,
     [BlogStyle.DEEP_DIVE]: `
       - 심층적인 기술 분석
       - 내부 동작 원리 설명
       - 성능 고려사항 포함
       - 고급 사용 패턴 소개
+      - 시스템 아키텍처를 Mermaid 다이어그램으로 시각화
+      - 데이터 흐름을 시퀀스 다이어그램으로 표현
+      - 성능 비교를 표로 정리
     `,
     [BlogStyle.TROUBLESHOOTING]: `
       - 문제 상황 명확히 설명
       - 원인 분석
       - 해결 과정 단계별 설명
       - 예방 방법 및 팁 제공
+      - 디버깅 흐름을 Mermaid 플로우차트로 시각화
+      - Before/After 코드 비교 블록 필수
     `
   };
 
@@ -68,6 +77,16 @@ ${content}
 ${content}`,
     [InputType.GIT_PUSH]: `아래 git 변경사항을 기반으로 개발일지/TIL 스타일의 블로그 글을 작성합니다.
 Git 변경사항:
+${content}`,
+    [InputType.NOTION]: `아래 Notion 페이지 내용을 바탕으로 더 풍성하고 완성도 높은 블로그 글을 작성합니다.
+
+중요 지침:
+- 원본 Notion 콘텐츠의 모든 내용을 반드시 포함하세요. 내용을 생략하지 마세요.
+- 원본의 핵심 메시지와 구조를 유지하면서 더 상세한 기술적 설명을 추가하세요
+- 코드 예제가 있다면 더 상세한 설명과 추가 예제를 제공하세요
+- 심층 분석, 팁/주의사항, 관련 배경 지식을 추가하여 글을 풍부하게 만드세요
+
+원본 Notion 콘텐츠:
 ${content}`
   };
 
@@ -104,6 +123,15 @@ ${customPrompt}`;
 3. 목차가 필요하면 포함
 4. 코드 블록에는 언어 명시
 5. 읽기 쉽게 단락 구분
+
+시각적 요소 (필수):
+- 글 전체에 최소 3개 이상의 시각적 요소를 반드시 포함하세요
+- Mermaid 다이어그램을 적극 활용하세요 (sequenceDiagram, flowchart, stateDiagram-v2, classDiagram, erDiagram 등)
+- 비교/분석 내용은 반드시 표(Table)로 정리하세요
+- 주요 개념은 Mermaid 다이어그램으로 시각화하세요
+- Before/After 비교 시 코드 블록을 나란히 배치하고 ❌/✅ 이모지로 구분하세요
+- 핵심 포인트, 주의사항, 팁은 인용 블록(>)과 이모지(💡, ⚠️, 🔥, 📝)로 강조하세요
+- 시스템 흐름이나 프로세스는 반드시 시퀀스 다이어그램 또는 플로우차트로 표현하세요
 
 마지막에 다음 형식으로 메타데이터를 JSON으로 제공해주세요:
 \`\`\`json
@@ -173,7 +201,8 @@ export async function generateBlogDraft(
   model: GeminiModel,
   instructions: string | undefined,
   customPrompt: string | undefined,
-  apiKey: string
+  apiKey: string,
+  webSearch: boolean = false
 ): Promise<GenerateResult> {
   if (!apiKey) {
     throw new Error(
@@ -185,10 +214,24 @@ export async function generateBlogDraft(
   const genAI = new GoogleGenerativeAI(apiKey);
   const genModel = genAI.getGenerativeModel({ model });
 
-  const prompt = getPromptTemplate(inputType, style, language, content, instructions, customPrompt);
+  let prompt = getPromptTemplate(inputType, style, language, content, instructions, customPrompt);
+
+  if (webSearch) {
+    prompt += `\n\n웹 검색 활용 지시:
+- 웹 검색을 통해 최신 정보, 통계, 공식 문서 링크를 적극 활용하세요
+- 검색 결과를 바탕으로 정확한 버전 정보, 최신 동향, 참고 자료를 포함하세요
+- 출처가 있는 정보는 링크를 함께 제공하세요`;
+  }
+
+  const tools: Tool[] | undefined = webSearch
+    ? [{ googleSearchRetrieval: {} }]
+    : undefined;
 
   try {
-    const result = await genModel.generateContent(prompt);
+    const result = await genModel.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      ...(tools && { tools })
+    });
     const response = result.response.text();
 
     return parseResponse(response);
