@@ -294,6 +294,7 @@ export interface BlogMetadata {
     title: string;
     tags: string[];
     estimatedReadTime: string;
+    thumbnailUrl?: string;
 }
 export interface TaskResult {
     [key: string]: unknown;

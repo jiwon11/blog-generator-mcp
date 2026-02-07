@@ -7,6 +7,7 @@ import {
 import { generateBlogDraft, applyFeedbackToDraft } from "./gemini.js";
 import { writeBlogWithClaude, applyFeedbackWithClaude, analyzeCodeWithClaude } from "./anthropic.js";
 import { TaskStatus, TaskType, TaskResult, InputType, BlogStyle, Language, ReviewFocus, GeminiModel } from "../types.js";
+import { searchThumbnailWithGemini, searchThumbnailWithClaude, injectThumbnailToFrontmatter } from "./thumbnail.js";
 
 // 알림 콜백 (외부에서 설정 가능)
 type NotificationCallback = (taskId: string, status: TaskStatus, message: string) => void;
@@ -70,7 +71,19 @@ export async function runDraftGeneration(
       webSearch
     );
 
-    await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
+    await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 80);
+
+    // 썸네일 이미지 검색
+    sendNotification(taskId, TaskStatus.IN_PROGRESS, "썸네일 이미지를 검색 중입니다...");
+    const thumbnailUrl = await searchThumbnailWithGemini(
+      result.metadata.title, result.metadata.tags, apiKey
+    );
+    if (thumbnailUrl) {
+      result.metadata.thumbnailUrl = thumbnailUrl;
+      result.draft = injectThumbnailToFrontmatter(result.draft, thumbnailUrl);
+    }
+
+    await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 95);
 
     // 결과 저장
     const taskResult: TaskResult = {
@@ -81,10 +94,11 @@ export async function runDraftGeneration(
     await updateTaskResult(taskId, taskResult);
 
     // 완료 알림
+    const thumbnailMsg = thumbnailUrl ? " (썸네일 포함)" : "";
     sendNotification(
       taskId,
       TaskStatus.COMPLETED,
-      `블로그 초안 생성이 완료되었습니다: "${result.metadata.title}"`
+      `블로그 초안 생성이 완료되었습니다${thumbnailMsg}: "${result.metadata.title}"`
     );
 
   } catch (error) {
@@ -237,7 +251,19 @@ export async function runProDraftGeneration(
       webSearch
     );
 
-    await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 90);
+    await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 80);
+
+    // 썸네일 이미지 검색
+    sendNotification(taskId, TaskStatus.IN_PROGRESS, "썸네일 이미지를 검색 중입니다...");
+    const thumbnailUrl = await searchThumbnailWithClaude(
+      result.metadata.title, result.metadata.tags, anthropicApiKey
+    );
+    if (thumbnailUrl) {
+      result.metadata.thumbnailUrl = thumbnailUrl;
+      result.draft = injectThumbnailToFrontmatter(result.draft, thumbnailUrl);
+    }
+
+    await updateTaskStatus(taskId, TaskStatus.IN_PROGRESS, 95);
 
     // 결과 저장 (분석 결과도 함께 저장)
     const taskResult: TaskResult = {
@@ -248,10 +274,11 @@ export async function runProDraftGeneration(
 
     await updateTaskResult(taskId, taskResult);
 
+    const thumbnailMsg = thumbnailUrl ? " (썸네일 포함)" : "";
     sendNotification(
       taskId,
       TaskStatus.COMPLETED,
-      `Pro Mode 블로그 생성 완료: "${result.metadata.title}"`
+      `Pro Mode 블로그 생성 완료${thumbnailMsg}: "${result.metadata.title}"`
     );
 
   } catch (error) {
